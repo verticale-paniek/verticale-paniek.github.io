@@ -34,18 +34,18 @@ Verify: Pages deploy is green; install on your Android; reload on a deep link wo
 2. Project Settings > API: copy the **Project URL** and **anon (publishable) key**. These are public and go in the repo config. The **service_role key never goes in the repo**.
 3. Authentication > Providers > Email: enable, **disable "Allow new users to sign up"**, keep "Confirm email" on.
 4. Authentication > URL Configuration: Site URL = the Pages URL; add it (and `http://localhost:3000`) to redirect URLs.
-5. Authentication > Email Templates: Claude provides the invite/reset templates using the `token_hash` link format (needed for hash routing).
+5. Nothing to configure for email: invites and password resets are one-time links the admin shares via WhatsApp (see overview, Auth).
 6. Create your own user: Authentication > Users > Add user (email + password). Then set yourself admin in the SQL editor:
    `update auth.users set raw_app_meta_data = raw_app_meta_data || '{"role":"admin"}' where email = '<you>';`
 7. Account settings > Access Tokens: create a personal access token for CI (migrations/functions deploy).
 8. GitHub repo > Settings > Secrets and variables > Actions: add
    - secret `SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD`
    - variables `SUPABASE_PROJECT_REF`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`
-9. Later (phase 2b): create a Resend (or similar) account for SMTP and enter it in Authentication > SMTP Settings, because the built-in mailer allows only a few emails per hour.
+9. Optional: in Authentication, raise the email OTP expiry (default 1 hour, max 24 hours) so shared links stay valid longer. Custom SMTP is not needed: the built-in mailer only reaches org members, and we do not send email.
 
 ## 5. Supabase in the repo (Claude)
 
-`supabase init`, migrations folder, RLS-by-default template, admin Edge Functions (invite, reset, disable, list users), shell admin page, login/set-password/forgot-password pages, CI job that applies migrations and deploys functions on `main`.
+`supabase init`, migrations folder, RLS-by-default template, admin Edge Functions (invite link, new link, disable, delete, list users), shell admin page, login/set-password pages, CI job that applies migrations and deploys functions on `main`.
 
 Verify: uninvited signup is rejected; invited user sets own password; admin can reset and disable; user A cannot read user B's rows.
 

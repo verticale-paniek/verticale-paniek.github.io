@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Verticale Paniek is a closed-group, Android-only installable PWA: a **hub** that hosts independent **modules** (TopLogger Plus, fitness, training, games...). Specs live in `docs/specs/pwa/` (`overview.md` first, `steps.md` for owner setup, `supabase-pwa.md` for the TopLogger module). Module authoring: `docs/module-guide.md`.
 
-Status: phase 1 (foundation) is scaffolded. **No Supabase yet**: auth, invites, RLS and the TopLogger module are specced but not built.
+Status: phase 1 (foundation) is deployed. Phase 2 (Supabase auth, invites, admin page, RLS example) is written but not yet verified against the hosted project. The TopLogger module is specced but not built.
 
 ## Commands
 
@@ -21,14 +21,16 @@ npx vitest run tests/registry.test.ts   # single test file
 npm run generate     # static build to .output/public (what Pages serves)
 ```
 
-CI (`.github/workflows/ci.yml` on PRs, `deploy.yml` on push to `main`) runs typecheck, lint, test, generate; deploy then publishes `hub/.output/public` to GitHub Pages. `npm install` runs `nuxt prepare` (needed before lint/typecheck).
+CI (`.github/workflows/ci.yml` on PRs, `deploy.yml` on push to `main`) runs typecheck, lint, test, generate; deploy then publishes `hub/.output/public` to GitHub Pages. `npm install` runs `nuxt prepare` (needed before lint/typecheck). The build needs `SUPABASE_URL` and `SUPABASE_ANON_KEY`: locally from the gitignored `hub/.env` (see `.env.example`), in CI from repo variables. `.github/workflows/supabase.yml` applies migrations and deploys Edge Functions when `hub/supabase/**` changes on `main`.
 
 ## Architecture
 
 - **Nuxt 4 SPA** (`ssr: false`, `nuxt generate`), source under `hub/app/`. Served at the origin root (`https://verticale-paniek.github.io/`), so `baseURL` stays `/`.
-- **Hash routing** (`router.options.hashMode`) because Pages cannot serve deep links. Later, Supabase email links must use the `token_hash` + `verifyOtp` pattern (`/#/auth/confirm?...`), not default hash-token links.
+- **Hash routing** (`router.options.hashMode`) because Pages cannot serve deep links. Auth links must use the `token_hash` + `verifyOtp` pattern (`/#/auth/confirm?...`), not Supabase's default hash-token links.
 - **PWA**: `@vite-pwa/nuxt`, `registerType: 'prompt'`. `UpdatePrompt.vue` shows the update banner when a new service worker is waiting; hourly update checks. Source maps are intentionally on in production (debugging from phone devtools). `BuildVersion.vue` shows `GITHUB_SHA` (short) and build time from `runtimeConfig.public`.
 - **Module registry**: `hub/app/shell/modules.ts` globs `hub/app/modules/*/manifest.ts` (excluding `_template`), `buildRegistry` validates it (id == folder name, no duplicates), and `hub/app/plugins/modules.ts` adds each module's routes to the router under `/<id>/...`. The launcher (`hub/app/pages/index.vue`) lists registered modules. Adding a module needs no shell edits.
+
+- **Auth**: `app/plugins/supabase.ts` creates the client (`detectSessionInUrl: false`) and restores the session before the app mounts; `app/middleware/auth.global.ts` sends signed-out users to `/auth/login`. No emails are sent (the built-in Supabase mailer only reaches org members): the `admin-users` function returns one-time links (`generateLink`) that the admin shares via WhatsApp. They point at `/#/auth/confirm?token_hash=...&type=invite|recovery`, which calls `verifyOtp` then `/auth/set-password`. Admin = `app_metadata.role = 'admin'`. The `/admin` page calls the `admin-users` Edge Function (`hub/supabase/functions/admin-users`, `verify_jwt = false` and checks the caller itself with `getUser` + the admin role). Anything that needs the service-role key goes in an Edge Function, never the client.
 
 ## Module rules
 
