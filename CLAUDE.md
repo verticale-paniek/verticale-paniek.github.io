@@ -21,7 +21,7 @@ npx vitest run tests/registry.test.ts   # single test file
 npm run generate     # static build to .output/public (what Pages serves)
 ```
 
-CI (`.github/workflows/ci.yml` on PRs, `deploy.yml` on push to `main`) runs typecheck, lint, test, generate; deploy then publishes `hub/.output/public` to GitHub Pages. `npm install` runs `nuxt prepare` (needed before lint/typecheck). The build needs `SUPABASE_URL` and `SUPABASE_ANON_KEY`: locally from the gitignored `hub/.env` (see `.env.example`), in CI from repo variables. `.github/workflows/supabase.yml` applies migrations and deploys Edge Functions when `hub/supabase/**` changes on `main`.
+CI (`.github/workflows/ci.yml` on PRs, `deploy.yml` on push to `main`) runs typecheck, lint, test, generate; deploy then publishes `hub/.output/public` to GitHub Pages. `npm install` runs `nuxt prepare` (needed before lint/typecheck). The build needs `SUPABASE_URL` and `SUPABASE_ANON_KEY`: locally from the gitignored `hub/.env` (see `.env.example`), in CI from repo variables. `.github/workflows/supabase.yml` applies migrations and deploys Edge Functions when `hub/supabase/**` changes on `main`. Keepalive: a daily `pg_cron` job (migration `keepalive`) calls `rpc/keepalive` through `pg_net`, backed up by `.github/workflows/keepalive.yml`.
 
 ## Architecture
 
