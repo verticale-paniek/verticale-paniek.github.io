@@ -7,3 +7,5 @@ Hub PWA for the Verticale Paniek climbing group, served at https://verticale-pan
 - `.github/workflows/`: CI and GitHub Pages deploy
 
 Run everything from `hub/`: `npm install`, `npm run dev`.
+
+test
