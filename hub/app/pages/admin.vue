@@ -2,7 +2,6 @@
 import { adminCall, whatsappShareUrl, type AdminUser } from '~/shell/admin'
 
 const supabase = useSupabase()
-const { user: me } = useAuth()
 const users = ref<AdminUser[]>([])
 const inviteEmail = ref('')
 const error = ref('')
@@ -71,7 +70,8 @@ async function remove(u: AdminUser) {
 
 <template>
   <section>
-    <h1>Members</h1>
+    <h1>Admin</h1>
+    <h2>Members</h2>
     <form @submit.prevent="invite">
       <label>Invite by email <input v-model="inviteEmail" type="email" required></label>
       <button :disabled="busy">Create invite link</button>
@@ -102,7 +102,7 @@ async function remove(u: AdminUser) {
         </div>
         <div class="actions">
           <button class="ghost" :disabled="busy" @click="newLink(u)">New link</button>
-          <template v-if="u.id !== me?.id">
+          <template v-if="u.role !== 'admin'">
             <button class="ghost" :disabled="busy" @click="toggleBan(u)">{{ u.banned ? 'Enable' : 'Disable' }}</button>
             <button class="danger" :disabled="busy" @click="remove(u)">Delete</button>
           </template>

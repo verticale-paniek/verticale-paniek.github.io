@@ -7,6 +7,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 const ALLOWED_ORIGINS = ['https://verticale-paniek.github.io', 'http://localhost:3000']
 const BAN_FOREVER = '876000h' // ~100 years; 'none' lifts a ban
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const ADMIN_PROTECTED = 'Admins cannot be disabled or deleted here. Remove the admin role in the database first.'
 
 function corsHeaders(req: Request): Record<string, string> {
   const origin = req.headers.get('Origin') ?? ''
@@ -23,6 +24,11 @@ function confirmLink(req: Request, hashedToken: string, type: 'invite' | 'recove
   const origin = req.headers.get('Origin') ?? ''
   const base = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0]
   return `${base}/#/auth/confirm?token_hash=${encodeURIComponent(hashedToken)}&type=${type}`
+}
+
+async function isAdminId(admin: ReturnType<typeof createClient>, id: string): Promise<boolean> {
+  const { data } = await admin.auth.admin.getUserById(id)
+  return data.user?.app_metadata?.role === 'admin'
 }
 
 function respond(req: Request, status: number, body: unknown): Response {
@@ -94,6 +100,7 @@ Deno.serve(async (req) => {
     case 'set-banned': {
       if (!body.id || typeof body.banned !== 'boolean') return respond(req, 400, { error: 'Invalid request' })
       if (body.id === callerId) return respond(req, 400, { error: 'You cannot disable your own account' })
+      if (await isAdminId(admin, body.id)) return respond(req, 403, { error: ADMIN_PROTECTED })
       const { error } = await admin.auth.admin.updateUserById(body.id, {
         ban_duration: body.banned ? BAN_FOREVER : 'none',
       })
@@ -104,6 +111,7 @@ Deno.serve(async (req) => {
     case 'delete': {
       if (!body.id) return respond(req, 400, { error: 'Invalid request' })
       if (body.id === callerId) return respond(req, 400, { error: 'You cannot delete your own account' })
+      if (await isAdminId(admin, body.id)) return respond(req, 403, { error: ADMIN_PROTECTED })
       const { error } = await admin.auth.admin.deleteUser(body.id)
       if (error) return respond(req, 400, { error: error.message })
       return respond(req, 200, { ok: true })
