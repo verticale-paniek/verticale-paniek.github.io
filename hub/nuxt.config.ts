@@ -19,6 +19,9 @@ export default defineNuxtConfig({
     public: {
       buildVersion: sha ?? 'dev',
       buildTime: new Date().toISOString(),
+      // Public by design: access is enforced by RLS and disabled signups, not by hiding these.
+      supabaseUrl: process.env.SUPABASE_URL ?? '',
+      supabaseAnonKey: process.env.SUPABASE_ANON_KEY ?? '',
     },
   },
 

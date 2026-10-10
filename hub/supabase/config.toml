@@ -1,0 +1,6 @@
+# Used by the Supabase CLI (CI links the hosted project; no local stack is required).
+project_id = "verticale-paniek"
+
+[functions.admin-users]
+# The function verifies the caller itself (getUser + admin role); see index.ts.
+verify_jwt = false

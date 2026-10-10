@@ -38,7 +38,7 @@ Nuxt (Vue 3, TypeScript) in SPA mode (`ssr: false`, `nuxt generate`), matching t
 ### Routing on GitHub Pages
 Pages serves only static files, so deep links like `/toplogger/routes` 404 on reload. Use **hash routing** (`router.options.hashMode: true` in Nuxt, URLs like `/#/toplogger/routes`). It needs no server support, survives reload and install, and is invisible to users in a standalone PWA. (A `404.html` copy of `index.html` is the alternative but returns HTTP 404 and complicates the service worker.) The repo is `verticale-paniek.github.io`, so the site is served at the origin root and `app.baseURL` stays `/`.
 
-Gotcha: Supabase's default email links put tokens in the URL hash, which collides with hash routing. Use the `token_hash` email-template pattern instead (link to `/#/auth/confirm?token_hash=...&type=invite`, then call `verifyOtp`), see Auth.
+Gotcha: Supabase's default email links put tokens in the URL hash, which collides with hash routing. Use the `token_hash` pattern instead (link to `/#/auth/confirm?token_hash=...&type=invite`, then call `verifyOtp`), see Auth.
 
 ### Hosting and repo
 - GitHub Pages on the free plan requires a **public** repo (private needs a paid plan). That is acceptable: no secrets in the repo. The Supabase URL and anon key are public by design; security is RLS + disabled signup. The service-role key and TopLogger tokens live only in Supabase secrets / GitHub Actions secrets.
@@ -52,11 +52,11 @@ Gotcha: Supabase's default email links put tokens in the URL hash, which collide
 ### Auth
 Supabase Auth, email + password, public signups disabled.
 
-- **Invite**: an admin enters an email; an Edge Function (checks the caller has `app_metadata.role = 'admin'`, uses the service-role key) calls `inviteUserByEmail`. The invitee follows the emailed link, lands on a "set your password" page and chooses their own password. The admin never sees it.
-- **Password reset**: the admin triggers a reset email for a user (or users use "forgot password" themselves); the user sets a new password via the link.
+- **Invite**: an admin enters an email; an Edge Function (checks the caller has `app_metadata.role = 'admin'`, uses the service-role key) calls `generateLink({ type: 'invite' })`, which creates the user and returns a one-time token **without sending email**. The admin page builds `/#/auth/confirm?token_hash=...&type=invite` and the admin shares it via WhatsApp. The invitee lands on a "set your password" page and chooses their own password. The admin never sees it.
+- **Password reset / expired invite**: the admin generates a new link (`generateLink({ type: 'recovery' })`) for the user and shares it the same way. There is no self-service "forgot password" because nothing sends email.
 - **Disable/enable**: admin Edge Function sets/clears the user's ban (`ban_duration`) via the admin API; also supports removing a user.
-- **Admin role** lives in `app_metadata` (not user-editable), set manually for the first admin via the Supabase dashboard/SQL. An admin page in the shell lists users and exposes invite/reset/disable.
-- **Email delivery**: the built-in Supabase mailer is heavily rate-limited (a few emails per hour) and meant for testing. Fine for the first invites; plan a free custom SMTP provider (e.g. Resend) in phase 2.
+- **Admin role** lives in `app_metadata` (not user-editable), set manually for the first admin via the Supabase dashboard/SQL. An admin page in the shell lists users and exposes invite/new link/disable/delete.
+- **No email delivery by design**: Supabase's built-in mailer only reaches addresses of the Supabase organization's members (and ~2 emails/hour), and editing templates requires custom SMTP. Sharing links over WhatsApp avoids needing SMTP. Link lifetime is the project's email OTP expiry (default 1 hour, max 24). Custom SMTP (e.g. Gmail app password, or Resend with a domain) stays an option if self-service reset is wanted later.
 - Invite links may open in the browser rather than the installed PWA; that is fine, the user sets the password there, then installs/opens the PWA and logs in.
 
 ## Repo layout
