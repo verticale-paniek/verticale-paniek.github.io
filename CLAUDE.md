@@ -10,6 +10,8 @@ Status: phase 1 (foundation) is scaffolded. **No Supabase yet**: auth, invites, 
 
 ## Commands
 
+The Nuxt app lives in `hub/` (the repo root only holds `.github/`, `docs/` and config), so run these from `hub/`:
+
 ```bash
 npm run dev          # Nuxt dev server (localhost:3000)
 npm run typecheck    # nuxt typecheck (vue-tsc)
@@ -20,19 +22,19 @@ npm run generate     # static build to .output/public (what Pages serves)
 npm run icons        # regenerate PNG icons in public/ (committed)
 ```
 
-CI (`.github/workflows/ci.yml` on PRs, `deploy.yml` on push to `main`) runs typecheck, lint, test, generate; deploy then publishes `.output/public` to GitHub Pages. `npm install` runs `nuxt prepare` (needed before lint/typecheck).
+CI (`.github/workflows/ci.yml` on PRs, `deploy.yml` on push to `main`) runs typecheck, lint, test, generate; deploy then publishes `hub/.output/public` to GitHub Pages. `npm install` runs `nuxt prepare` (needed before lint/typecheck).
 
 ## Architecture
 
-- **Nuxt 4 SPA** (`ssr: false`, `nuxt generate`), source under `app/`. Served at the origin root (`https://verticale-paniek.github.io/`), so `baseURL` stays `/`.
+- **Nuxt 4 SPA** (`ssr: false`, `nuxt generate`), source under `hub/app/`. Served at the origin root (`https://verticale-paniek.github.io/`), so `baseURL` stays `/`.
 - **Hash routing** (`router.options.hashMode`) because Pages cannot serve deep links. Later, Supabase email links must use the `token_hash` + `verifyOtp` pattern (`/#/auth/confirm?...`), not default hash-token links.
 - **PWA**: `@vite-pwa/nuxt`, `registerType: 'prompt'`. `UpdatePrompt.vue` shows the update banner when a new service worker is waiting; hourly update checks. Source maps are intentionally on in production (debugging from phone devtools). `BuildVersion.vue` shows `GITHUB_SHA` (short) and build time from `runtimeConfig.public`.
-- **Module registry**: `app/shell/modules.ts` globs `app/modules/*/manifest.ts` (excluding `_template`), `buildRegistry` validates it (id == folder name, no duplicates), and `app/plugins/modules.ts` adds each module's routes to the router under `/<id>/...`. The launcher (`app/pages/index.vue`) lists registered modules. Adding a module needs no shell edits.
+- **Module registry**: `hub/app/shell/modules.ts` globs `hub/app/modules/*/manifest.ts` (excluding `_template`), `buildRegistry` validates it (id == folder name, no duplicates), and `hub/app/plugins/modules.ts` adds each module's routes to the router under `/<id>/...`. The launcher (`hub/app/pages/index.vue`) lists registered modules. Adding a module needs no shell edits.
 
 ## Module rules
 
-- **Modules never import from each other.** Shared code goes through the shell (`app/shell`, `app/components`, composables). `tests/modules.test.ts` enforces this.
-- **Every table gets RLS.** Tables are prefixed with the module id (`toplogger_*`), live in `supabase/migrations/`, enable RLS and have explicit `auth.uid()`-scoped policies per operation.
+- **Modules never import from each other.** Shared code goes through the shell (`hub/app/shell`, `hub/app/components`, composables). `hub/tests/modules.test.ts` enforces this.
+- **Every table gets RLS.** Tables are prefixed with the module id (`toplogger_*`), live in `hub/supabase/migrations/`, enable RLS and have explicit `auth.uid()`-scoped policies per operation.
 - **No secrets in the repo.** The Supabase URL and anon key are public by design; the service-role key, TopLogger tokens and cron secrets live only in Supabase / GitHub Actions secrets.
 
 ## TopLogger module constraints (when built)
