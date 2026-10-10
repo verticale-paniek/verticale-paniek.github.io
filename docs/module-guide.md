@@ -1,0 +1,14 @@
+# Writing a module
+
+1. Copy `app/modules/_template/` to `app/modules/<id>/`. The folder name is the module id.
+2. In `manifest.ts` set `id` (must equal the folder name), `name`, `icon` (one emoji) and `routes`. Route paths are relative; the shell mounts them under `/<id>`. Pages live in the module's `pages/`.
+3. Push. The shell discovers `app/modules/*/manifest.ts` automatically (only `_template` is skipped), and the module shows up in the launcher.
+
+## Rules
+
+- **Modules never import from each other.** Share things through the shell (`app/shell`, `app/components`, composables). `tests/modules.test.ts` fails if a module reaches into another one.
+- **Every table gets RLS.** Tables are prefixed with the module id (`fitness_*`) and created in `supabase/migrations/`. Checklist for each new table:
+  - `alter table ... enable row level security;`
+  - an explicit policy per operation, scoped by `auth.uid()`; no policy means no access;
+  - no `using (true)` unless the data is deliberately readable by the whole group.
+- **No secrets in the repo.** The Supabase URL and anon key are public by design; the service-role key, TopLogger tokens and cron secrets are not.

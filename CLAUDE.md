@@ -1,0 +1,47 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project
+
+Verticale Paniek is a closed-group, Android-only installable PWA: a **hub** that hosts independent **modules** (TopLogger Plus, fitness, training, games...). Specs live in `docs/specs/pwa/` (`overview.md` first, `steps.md` for owner setup, `supabase-pwa.md` for the TopLogger module). Module authoring: `docs/module-guide.md`.
+
+Status: phase 1 (foundation) is scaffolded. **No Supabase yet**: auth, invites, RLS and the TopLogger module are specced but not built.
+
+## Commands
+
+```bash
+npm run dev          # Nuxt dev server (localhost:3000)
+npm run typecheck    # nuxt typecheck (vue-tsc)
+npm run lint         # eslint (@nuxt/eslint)
+npm test             # vitest run
+npx vitest run tests/registry.test.ts   # single test file
+npm run generate     # static build to .output/public (what Pages serves)
+npm run icons        # regenerate PNG icons in public/ (committed)
+```
+
+CI (`.github/workflows/ci.yml` on PRs, `deploy.yml` on push to `main`) runs typecheck, lint, test, generate; deploy then publishes `.output/public` to GitHub Pages. `npm install` runs `nuxt prepare` (needed before lint/typecheck).
+
+## Architecture
+
+- **Nuxt 4 SPA** (`ssr: false`, `nuxt generate`), source under `app/`. Served at the origin root (`https://verticale-paniek.github.io/`), so `baseURL` stays `/`.
+- **Hash routing** (`router.options.hashMode`) because Pages cannot serve deep links. Later, Supabase email links must use the `token_hash` + `verifyOtp` pattern (`/#/auth/confirm?...`), not default hash-token links.
+- **PWA**: `@vite-pwa/nuxt`, `registerType: 'prompt'`. `UpdatePrompt.vue` shows the update banner when a new service worker is waiting; hourly update checks. Source maps are intentionally on in production (debugging from phone devtools). `BuildVersion.vue` shows `GITHUB_SHA` (short) and build time from `runtimeConfig.public`.
+- **Module registry**: `app/shell/modules.ts` globs `app/modules/*/manifest.ts` (excluding `_template`), `buildRegistry` validates it (id == folder name, no duplicates), and `app/plugins/modules.ts` adds each module's routes to the router under `/<id>/...`. The launcher (`app/pages/index.vue`) lists registered modules. Adding a module needs no shell edits.
+
+## Module rules
+
+- **Modules never import from each other.** Shared code goes through the shell (`app/shell`, `app/components`, composables). `tests/modules.test.ts` enforces this.
+- **Every table gets RLS.** Tables are prefixed with the module id (`toplogger_*`), live in `supabase/migrations/`, enable RLS and have explicit `auth.uid()`-scoped policies per operation.
+- **No secrets in the repo.** The Supabase URL and anon key are public by design; the service-role key, TopLogger tokens and cron secrets live only in Supabase / GitHub Actions secrets.
+
+## TopLogger module constraints (when built)
+
+- Refresh tokens are stored server-side only, encrypted at the application layer, in a private table with no client RLS policies. All TopLogger calls go through an authenticated Edge Function that derives the user from the verified JWT, never from a caller-supplied `user_id`.
+- Connecting uses a one-time, short-lived, hashed pairing secret bound to the initiating Supabase user. Never log tokens or authorization headers; return sanitized errors; do not collect TopLogger passwords or expose an unrestricted GraphQL proxy.
+- TopLogger refresh semantics (sliding expiry, rotation) are **unverified**; do not build the scheduled refresh on them until confirmed.
+- GitHub disables scheduled workflows after 60 days of repo inactivity, so `pg_cron` in Supabase is the primary keepalive and the Actions ping only a backup.
+
+## Phases
+
+1. Foundation (done, pending first deploy and phone verification). 2. Supabase (auth, invites, RLS, keepalive). 3. TopLogger module. 4. Later (achievements, more modules). Each phase is verified on a real Android phone.
