@@ -19,7 +19,6 @@ npm run lint         # eslint (@nuxt/eslint)
 npm test             # vitest run
 npx vitest run tests/registry.test.ts   # single test file
 npm run generate     # static build to .output/public (what Pages serves)
-npm run icons        # regenerate PNG icons in public/ (committed)
 ```
 
 CI (`.github/workflows/ci.yml` on PRs, `deploy.yml` on push to `main`) runs typecheck, lint, test, generate; deploy then publishes `hub/.output/public` to GitHub Pages. `npm install` runs `nuxt prepare` (needed before lint/typecheck).

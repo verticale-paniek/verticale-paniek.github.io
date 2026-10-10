@@ -7,6 +7,7 @@ const isHome = computed(() => route.path === '/')
   <div class="shell">
     <header>
       <NuxtLink v-if="!isHome" to="/" aria-label="Back to launcher">←</NuxtLink>
+      <img src="/favicon.png" alt="" width="28" height="28">
       <strong>Verticale Paniek</strong>
     </header>
     <main><slot /></main>

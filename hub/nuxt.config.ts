@@ -26,10 +26,13 @@ export default defineNuxtConfig({
     head: {
       title: 'Verticale Paniek',
       meta: [
-        { name: 'theme-color', content: '#181c26' },
+        { name: 'theme-color', content: '#222021' },
         { name: 'description', content: 'Hub for the Verticale Paniek climbing group' },
       ],
-      link: [{ rel: 'apple-touch-icon', href: '/apple-touch-icon.png' }],
+      link: [
+        { rel: 'icon', type: 'image/png', href: '/favicon.png' },
+        { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
+      ],
     },
   },
 
@@ -43,8 +46,8 @@ export default defineNuxtConfig({
       short_name: 'Paniek',
       description: 'Hub for the Verticale Paniek climbing group',
       lang: 'nl',
-      theme_color: '#181c26',
-      background_color: '#181c26',
+      theme_color: '#222021',
+      background_color: '#222021',
       display: 'standalone',
       start_url: '/',
       scope: '/',
