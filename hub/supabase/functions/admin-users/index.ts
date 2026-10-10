@@ -1,7 +1,7 @@
 // Admin-only user management: list, invite and sign-in links, disable/enable, delete.
 // No emails are sent: links are returned to the admin, who shares them (e.g. via WhatsApp).
 // Deployed with verify_jwt = false (see supabase/config.toml): the caller's JWT is verified
-// below with auth.getUser(), and the admin role is read from app_metadata, which users cannot edit.
+// below with auth.getClaims(), and the admin role is read from app_metadata, which users cannot edit.
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
 const ALLOWED_ORIGINS = ['https://verticale-paniek.github.io', 'http://localhost:3000']
@@ -15,6 +15,8 @@ function corsHeaders(req: Request): Record<string, string> {
     'Access-Control-Allow-Origin': ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0],
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    // Let the browser reuse the preflight answer (Chrome caps this at 2 hours) instead of an extra round trip per call.
+    'Access-Control-Max-Age': '7200',
     'Vary': 'Origin',
   }
 }
@@ -49,10 +51,14 @@ Deno.serve(async (req) => {
     auth: { persistSession: false, autoRefreshToken: false },
   })
 
-  const { data: caller, error: authError } = await admin.auth.getUser(token)
-  if (authError || !caller.user) return respond(req, 401, { error: 'Not signed in' })
-  if (caller.user.app_metadata?.role !== 'admin') return respond(req, 403, { error: 'Admins only' })
-  const callerId = caller.user.id
+  // Verify the JWT locally against the project's cached signing keys (no round trip to the auth
+  // service when the project uses asymmetric keys; supabase-js falls back to a server check otherwise).
+  // Trade-off: a role change or ban only takes effect when the caller's access token is refreshed (<= 1 hour).
+  const { data: verified, error: authError } = await admin.auth.getClaims(token)
+  const claims = verified?.claims
+  if (authError || !claims?.sub) return respond(req, 401, { error: 'Not signed in' })
+  if (claims.app_metadata?.role !== 'admin') return respond(req, 403, { error: 'Admins only' })
+  const callerId = claims.sub
 
   let body: { action?: string, email?: string, id?: string, banned?: boolean }
   try {

@@ -94,6 +94,19 @@ Do not collect or store TopLogger passwords. Validate every submitted token by e
 - Choose the schedule and safety margin only after observing TopLogger's actual expiry behavior. A daily check with a multi-day margin is a candidate, not a verified setting. Account for scheduler delays and temporary TopLogger/Supabase outages.
 - Make the refresh process observable through counts and sanitized status, not token values. Alert on repeated failures and avoid tight retry loops.
 
+## Latency
+
+Every TopLogger call goes phone -> Edge Function -> TopLogger and back, so the function must stay thin. Measured on 2026-10-10 from a desktop (not a phone): a direct Supabase REST call took ~0.23 s, a warm Edge Function call ~0.33-0.47 s, a CORS preflight ~0.28 s. The function layer itself is cheap (~0.1-0.2 s); the cost is the number of sequential round trips and cold starts. Practices:
+
+- **Cache the CORS preflight.** Return `Access-Control-Max-Age: 7200` (done in `admin-users`) so the browser skips the extra `OPTIONS` round trip.
+- **Verify the JWT locally.** Use `auth.getClaims(token)` (cached signing keys) instead of `auth.getUser(token)`, which calls the auth service on every request. Trade-off: role changes and bans apply when the caller's access token refreshes (<= 1 hour); fine for reads, so re-check against the database for sensitive writes if that matters.
+- **Cache inside the function instance.** Keep the decrypted TopLogger session (and the current access token and its expiry) in module-level memory so warm calls skip the credentials read and the decrypt. Treat the cache as disposable: it disappears on a cold start and must never be the only copy. Never log or return its contents.
+- **One round trip per screen.** Give the PWA coarse endpoints that fetch what a screen needs from TopLogger in parallel on the server and return one response, instead of many small calls from the phone.
+- **Show cached data first.** Render the last result from memory/IndexedDB immediately and refresh in the background (stale-while-revalidate). This improves perceived speed more than any server tuning and makes the module usable on a weak connection in a climbing hall.
+- **Keep the function in the same region as the database** and keep the bundle small (few imports) to shorten cold starts.
+- **Warm window.** Supabase does not document how long an idle function instance stays warm; assume "a few minutes" and do not depend on it. A climbing session (repeated use within minutes) should mostly hit warm instances, and the first call after a long gap may be noticeably slower. Measure the real gap by timing calls at increasing intervals before relying on any number.
+- **Direct browser-to-TopLogger calls are not possible (tested 2026-10-10).** `https://app.toplogger.nu/graphql` answers CORS preflights with `Access-Control-Allow-Origin` only for `https://app.toplogger.nu`; for our origin, `localhost` and `capacitor://localhost` it sends no allow-origin header, so browsers block the call. (The Android app avoids this by using native `CapacitorHttp`, which is not subject to CORS.) Server-side calls from the Edge Function are not affected, which is why every TopLogger call goes through it. Re-test if TopLogger changes its CORS policy.
+
 ## Security and operational requirements
 
 - Disable public Supabase signup and verify that only invited identities can sign in. Protect invite and administrative actions.
