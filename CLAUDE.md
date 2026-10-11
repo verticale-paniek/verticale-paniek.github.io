@@ -43,7 +43,7 @@ CI (`.github/workflows/ci.yml` on PRs, `deploy.yml` on push to `main`) runs type
 - Refresh tokens are stored server-side only, encrypted at the application layer, in a private table with no client RLS policies. All TopLogger calls go through an authenticated Edge Function that derives the user from the verified JWT, never from a caller-supplied `user_id`.
 - Connecting uses a one-time, short-lived, hashed pairing secret bound to the initiating Supabase user. Never log tokens or authorization headers; return sanitized errors; do not collect TopLogger passwords or expose an unrestricted GraphQL proxy.
 - Latency matters for this module: follow the guidance in the "Latency" section of `docs/specs/pwa/supabase-pwa.md`.
-- TopLogger refresh semantics (sliding expiry, rotation) are **unverified**; do not build the scheduled refresh on them until confirmed.
+- TopLogger refresh semantics (verified 2026-10-11): refresh tokens are single use (rotation), expire 14 days after issue and slide on every exchange; access tokens last 10 minutes. Persist the new pair before using it and serialize refreshes per user. See `docs/specs/pwa/supabase-pwa.md`.
 - GitHub disables scheduled workflows after 60 days of repo inactivity, so `pg_cron` in Supabase is the primary keepalive and the Actions ping only a backup.
 
 ## Phases

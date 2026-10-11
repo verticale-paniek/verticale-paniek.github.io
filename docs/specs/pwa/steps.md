@@ -57,4 +57,11 @@ Verify: check the Supabase project is still active after 8+ days.
 
 ## 7. TopLogger module
 
-Per `supabase-pwa.md`. Start with manual refresh-token linking. First step for you: obtain a refresh token from a logged-in `app.toplogger.nu` session and note two successive `refresh.expiresAt` values to prove sliding expiry before building the scheduled refresh.
+Before the first deploy of the `toplogger` function, set its encryption key once (Edge Function secret, never in the repo):
+
+1. Generate a key: `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"`.
+2. Supabase dashboard > your project > Edge Functions > Secrets: add `TOPLOGGER_ENCRYPTION_KEY` with that value. (CLI alternative: `npx supabase login`, then `npx supabase secrets set TOPLOGGER_ENCRYPTION_KEY=<key> --project-ref <ref>`.)
+
+Keep a copy in your password manager: if the key is lost, all stored TopLogger connections are unreadable and everyone must reconnect. `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are provided to Edge Functions automatically.
+
+Per `supabase-pwa.md`. Start with manual refresh-token linking: paste a refresh token from a logged-in `app.toplogger.nu` session (local storage, `tl-auth.refresh.token`) into the module's connect form. Each refresh token works once, so copy a fresh one for every attempt. Sliding expiry and rotation are already verified (see `supabase-pwa.md`).

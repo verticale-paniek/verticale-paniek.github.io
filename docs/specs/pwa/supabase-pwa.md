@@ -119,8 +119,8 @@ Every TopLogger call goes phone -> Edge Function -> TopLogger and back, so the f
 
 ## Decisions and assumptions to verify
 
-- **Sliding refresh expiry:** after a successful refresh, does the returned refresh token expire about two weeks from the new issue time? Compare successive `refresh.expiresAt` values. If expiry is fixed or refresh can be revoked independently, a scheduled job cannot guarantee an indefinitely live session.
-- **Refresh rotation semantics:** does each exchange invalidate the previous refresh token? Confirm before implementing concurrency control and recovery.
+- **Sliding refresh expiry: verified 2026-10-11.** The refresh token expires 14 days after it was issued, and each exchange issues a new one (a token issued at 20:35:12 was exchanged at 20:36:07; the new one expires exactly 14 days after 20:36:07). So a refresh at least once every 14 days keeps a connection alive indefinitely. Still to observe: whether TopLogger caps total session age or revokes independently.
+- **Refresh rotation: verified 2026-10-11.** Refresh tokens are single use: the second exchange of an already used token fails, and the new refresh token from the first exchange works. The access token lives 10 minutes. Consequences: the new token pair must be persisted before the old one is forgotten (a crash between TopLogger's response and our write loses the connection until the user reconnects), refreshes must be serialized per user, and a refresh should never be retried with the old token.
 - **First connection:** choose Android connector, Windows helper, manual entry, or more than one. The pairing protocol should remain the same across them.
 - **API behavior:** verify permitted origins, rate limits, token expiry, account-specific permissions, and behavior during TopLogger outages. The Edge Function avoids browser CORS dependence but does not remove API or account restrictions.
 - **Data scope:** decide whether the first PWA release includes the existing routes, history, community, and ascent-write features, or starts with a smaller read-only slice.

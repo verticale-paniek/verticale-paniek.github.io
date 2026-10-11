@@ -8,3 +8,7 @@ verify_jwt = false
 [functions.toplogger-poc]
 # The function verifies the caller itself (getClaims); see index.ts.
 verify_jwt = false
+
+[functions.toplogger]
+# The function verifies the caller itself (getClaims); see index.ts.
+verify_jwt = false
