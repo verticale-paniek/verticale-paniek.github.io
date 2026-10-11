@@ -1,5 +1,6 @@
 // POC: proves an Edge Function can reach TopLogger and shows the raw result to the PWA.
-// Sends fixed, unauthenticated probe queries only; no TopLogger token is involved yet.
+// Sends fixed probe queries only. If the caller passes an access token, one extra authenticated userMe
+// call is made with it. The token is used for that single request and is never stored, logged or returned.
 // Deployed with verify_jwt = false (see supabase/config.toml): the caller's JWT is verified below.
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
@@ -28,12 +29,12 @@ function respond(req: Request, status: number, body: unknown): Response {
   return new Response(JSON.stringify(body), { status, headers: { ...corsHeaders(req), 'Content-Type': 'application/json' } })
 }
 
-async function probe(payload: { query: string, variables: Record<string, unknown> }) {
+async function probe(payload: { query: string, variables: Record<string, unknown> }, accessToken?: string) {
   const started = performance.now()
   try {
     const response = await fetch(TOPLOGGER_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}) },
       body: JSON.stringify(payload),
       signal: AbortSignal.timeout(30000),
     })
@@ -60,6 +61,15 @@ Deno.serve(async (req) => {
   const { data, error } = await supabase.auth.getClaims(token)
   if (error || !data?.claims?.sub) return respond(req, 401, { error: 'Not signed in' })
 
-  const results = Object.fromEntries(await Promise.all(Object.entries(PROBES).map(async ([name, payload]) => [name, await probe(payload)])))
+  let accessToken = ''
+  try {
+    const body = await req.json()
+    if (typeof body?.accessToken === 'string') accessToken = body.accessToken.trim()
+  }
+  catch { /* no body: unauthenticated probes only */ }
+
+  const jobs: [string, Promise<unknown>][] = Object.entries(PROBES).map(([name, payload]) => [name, probe(payload)])
+  if (accessToken) jobs.push(['userMeWithToken', probe(PROBES.userMe, accessToken)])
+  const results = Object.fromEntries(await Promise.all(jobs.map(async ([name, job]) => [name, await job])))
   return respond(req, 200, results)
 })

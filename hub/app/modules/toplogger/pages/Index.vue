@@ -4,7 +4,7 @@
 const supabase = useSupabase()
 const output = ref('')
 const busy = ref(false)
-const token = ref('') // transient: only used for the direct call, never stored or sent to our servers
+const token = ref('') // transient: never stored; sent only to TopLogger (direct) or in the function request body
 
 const URL = 'https://app.toplogger.nu/graphql'
 const PROBES: Record<string, { query: string, variables: Record<string, unknown>, authorized?: boolean }> = {
@@ -58,7 +58,7 @@ async function runViaFunction() {
   output.value = ''
   const started = performance.now()
   try {
-    const { data, error } = await supabase.functions.invoke('toplogger-poc', { body: {} })
+    const { data, error } = await supabase.functions.invoke('toplogger-poc', { body: { accessToken: token.value.trim() } })
     const roundTripMs = Math.round(performance.now() - started)
     if (error) {
       // The shape of error.context differs between supabase-js versions: show whatever it is.
@@ -87,7 +87,7 @@ async function runViaFunction() {
   <section>
     <h1>TopLogger POC</h1>
     <p>
-      <label>Access token (optional, direct call only)<br>
+      <label>Access token (optional)<br>
         <input v-model="token" type="password" autocomplete="off" style="width: 100%;">
       </label>
     </p>
