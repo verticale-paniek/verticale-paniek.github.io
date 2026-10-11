@@ -173,6 +173,32 @@ export async function accessToken(userId: string, rejected?: string): Promise<st
   }
 }
 
+/** Connections whose refresh token expires before `cutoff`, soonest first. Used by the scheduled renewal. */
+export async function dueConnections(cutoff: Date, limit: number): Promise<string[]> {
+  const { data, error } = await adminClient().from(TABLE).select('user_id')
+    .eq('status', 'connected').lt('refresh_expires_at', cutoff.toISOString())
+    .order('refresh_expires_at').limit(limit)
+  if (error) throw new ConnectionError('storage', 'Could not list connections.')
+  return (data ?? []).map(row => row.user_id as string)
+}
+
+/**
+ * Renews a connection regardless of how fresh its access token is, so its refresh expiry slides forward.
+ * Skips quietly if another instance holds the lease (it is being renewed right now).
+ */
+export async function renewConnection(userId: string): Promise<'renewed' | 'skipped'> {
+  const row = await readRow(userId)
+  if (!row || row.status !== 'connected') return 'skipped'
+  const tokens = await open(row)
+  if (Date.parse(tokens.refresh.expiresAt) <= Date.now()) {
+    await markReconnect(row, 'Refresh token expired.')
+    throw new ConnectionError('reconnect_required', 'Connection expired.')
+  }
+  if (!(await claimLease(row))) return 'skipped'
+  await exchangeAndStore(row, tokens)
+  return 'renewed'
+}
+
 /** Runs a read-only call, with one coordinated refresh and retry if TopLogger rejects the access token. */
 export async function readWithAccess<T>(userId: string, call: (token: string) => Promise<T>): Promise<T> {
   const token = await accessToken(userId)

@@ -5,8 +5,5 @@ export default {
   name: 'TopLogger Plus',
   description: 'Work in progress: connect your TopLogger account',
   icon: '🧗',
-  routes: [
-    { path: '', component: () => import('./pages/Index.vue') },
-    { path: 'poc', component: () => import('./pages/Poc.vue') },
-  ],
+  routes: [{ path: '', component: () => import('./pages/Index.vue') }],
 } satisfies ModuleManifest

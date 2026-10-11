@@ -86,6 +86,5 @@ async function loadProfile() {
     </template>
 
     <p v-if="error" class="error" role="alert">{{ error }}</p>
-    <p><NuxtLink to="/toplogger/poc">API proof of concept</NuxtLink></p>
   </section>
 </template>

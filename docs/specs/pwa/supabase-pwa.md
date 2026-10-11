@@ -1,6 +1,6 @@
 # Invite-only TopLogger PWA
 
-Status: proposed; no Supabase backend or web deployment is implemented.
+Status: the connection part is implemented; see `../../toplogger/authentication.md` for what exists and how it works. This file is the design and requirements.
 
 ## Goal
 

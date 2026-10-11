@@ -96,4 +96,4 @@ Decided: Nuxt/Vue, GitHub organization `verticale-paniek` with repo `verticale-p
 
 - Custom domain later? (avoids URL changes entirely)
 
-Step-by-step setup actions are in `steps.md`.
+Step-by-step setup actions are in `../../setup.md`.

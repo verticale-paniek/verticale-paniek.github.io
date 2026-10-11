@@ -5,10 +5,10 @@ project_id = "verticale-paniek"
 # The function verifies the caller itself (getUser + admin role); see index.ts.
 verify_jwt = false
 
-[functions.toplogger-poc]
+[functions.toplogger]
 # The function verifies the caller itself (getClaims); see index.ts.
 verify_jwt = false
 
-[functions.toplogger]
-# The function verifies the caller itself (getClaims); see index.ts.
+[functions.toplogger-refresh]
+# Called by pg_cron, not by users: it checks a shared secret header itself; see index.ts.
 verify_jwt = false

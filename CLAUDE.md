@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Verticale Paniek is a closed-group, Android-only installable PWA: a **hub** that hosts independent **modules** (TopLogger Plus, fitness, training, games...). Specs live in `docs/specs/pwa/` (`overview.md` first, `steps.md` for owner setup, `supabase-pwa.md` for the TopLogger module). Module authoring: `docs/module-guide.md`.
+Verticale Paniek is a closed-group, Android-only installable PWA: a **hub** that hosts independent **modules** (TopLogger Plus, fitness, training, games...). `docs/` holds documentation of what exists (`setup.md` for owner setup, `module-guide.md` for authoring modules, `toplogger/` for the TopLogger module) and `docs/specs/` holds feature design and sparring that is not (fully) built: `specs/pwa/` (`overview.md` first, `supabase-pwa.md` for the TopLogger design) and `specs/refresh-ux/`. Finished specs move to `docs/specs/archive/`.
 
-Status: phase 1 (foundation) is deployed. Phase 2 (Supabase auth, invites, admin page, RLS example) is written but not yet verified against the hosted project. The TopLogger module is specced but not built.
+Status: phase 1 (foundation) is deployed. Phase 2 (Supabase auth, invites, admin page, RLS example) is written but not yet verified against the hosted project. The TopLogger module has its connection layer built (see below); its data screens are not.
 
 ## Commands
 
@@ -38,12 +38,14 @@ CI (`.github/workflows/ci.yml` on PRs, `deploy.yml` on push to `main`) runs type
 - **Every table gets RLS.** Tables are prefixed with the module id (`toplogger_*`), live in `hub/supabase/migrations/`, enable RLS and have explicit `auth.uid()`-scoped policies per operation.
 - **No secrets in the repo.** The Supabase URL and anon key are public by design; the service-role key, TopLogger tokens and cron secrets live only in Supabase / GitHub Actions secrets.
 
-## TopLogger module constraints (when built)
+## TopLogger module constraints
+
+Built so far: connect, status, profile and token refresh (on use, plus a daily `toplogger-refresh` job). How it works: `docs/toplogger/authentication.md`. Data screens are not built yet.
 
 - Refresh tokens are stored server-side only, encrypted at the application layer, in a private table with no client RLS policies. All TopLogger calls go through an authenticated Edge Function that derives the user from the verified JWT, never from a caller-supplied `user_id`.
 - Connecting uses a one-time, short-lived, hashed pairing secret bound to the initiating Supabase user. Never log tokens or authorization headers; return sanitized errors; do not collect TopLogger passwords or expose an unrestricted GraphQL proxy.
 - Latency matters for this module: follow the guidance in the "Latency" section of `docs/specs/pwa/supabase-pwa.md`.
-- TopLogger refresh semantics (verified 2026-10-11): refresh tokens are single use (rotation), expire 14 days after issue and slide on every exchange; access tokens last 10 minutes. Persist the new pair before using it and serialize refreshes per user. See `docs/specs/pwa/supabase-pwa.md`.
+- TopLogger refresh semantics (verified 2026-10-11): refresh tokens are single use (rotation), expire 14 days after issue and slide on every exchange; access tokens last 10 minutes. Persist the new pair before using it and serialize refreshes per user. See `docs/toplogger/authentication.md`.
 - GitHub disables scheduled workflows after 60 days of repo inactivity, so `pg_cron` in Supabase is the primary keepalive and the Actions ping only a backup.
 
 ## Phases
