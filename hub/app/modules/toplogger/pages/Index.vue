@@ -50,7 +50,8 @@ async function disconnect() {
 async function loadProfile() {
   const result = await run(() => toploggerCall<Profile>(supabase, { action: 'profile' }))
   if (result) profile.value = result
-  else await loadStatus() // an expired connection shows up here
+  // Also after success: the call may have refreshed the tokens, or an expired connection shows up here.
+  await loadStatus()
 }
 </script>
 
