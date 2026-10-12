@@ -15,6 +15,7 @@
 
 @layer base {
   html { @apply bg-bg text-text scheme-light; }
+  body { @apply bg-bg; }
   .dark {
     @apply scheme-dark;
     --color-bg: var(--color-slate-900);

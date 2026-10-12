@@ -22,6 +22,9 @@ const dark = computed({
 })
 
 useHead({
-  meta: [{ name: 'theme-color', content: () => dark.value ? '#0f172a' : '#f8fafc' }],
+  meta: [
+    { name: 'theme-color', content: () => dark.value ? '#0f172a' : '#f8fafc' },
+    { name: 'color-scheme', content: () => dark.value ? 'dark' : 'light' },
+  ],
 })
 </script>
