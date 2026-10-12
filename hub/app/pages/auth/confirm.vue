@@ -1,3 +1,25 @@
+<template>
+  <section>
+    <h1 class="my-[0.67em] text-[2em] font-bold">
+      Verifying…
+    </h1>
+    <template v-if="error">
+      <p
+        class="my-4 text-error"
+        role="alert"
+      >
+        {{ error }}
+      </p>
+      <p class="my-4">
+        <NuxtLink
+          class="text-accent underline"
+          to="/auth/login"
+        >Back to sign in</NuxtLink>
+      </p>
+    </template>
+  </section>
+</template>
+
 <script setup lang="ts">
 // Landing page for invite and password-reset emails (see hub/supabase/templates).
 // The link carries a one-time token_hash in the query, which we exchange for a session.
@@ -13,17 +35,11 @@ onMounted(async () => {
     return
   }
   const { error: e } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type })
-  if (e) error.value = 'This link has expired or was already used. Ask an admin for a new one.'
-  else await navigateTo('/auth/set-password', { replace: true })
+  if (e) {
+    error.value = 'This link has expired or was already used. Ask an admin for a new one.'
+  }
+  else {
+    await navigateTo('/auth/set-password', { replace: true })
+  }
 })
 </script>
-
-<template>
-  <section>
-    <h1>Verifying…</h1>
-    <template v-if="error">
-      <p class="error" role="alert">{{ error }}</p>
-      <p><NuxtLink to="/auth/login">Back to sign in</NuxtLink></p>
-    </template>
-  </section>
-</template>

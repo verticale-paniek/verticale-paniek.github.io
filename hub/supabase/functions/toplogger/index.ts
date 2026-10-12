@@ -20,7 +20,9 @@ function fail(req: Request, error: unknown): Response {
     return respond(req, status, { error: error.message, code: error.code })
   }
   if (error instanceof TopLoggerError) {
-    if (error.kind === 'auth') return respond(req, 409, { error: 'Your TopLogger connection expired. Connect again.', code: 'reconnect_required' })
+    if (error.kind === 'auth') {
+      return respond(req, 409, { error: 'Your TopLogger connection expired. Connect again.', code: 'reconnect_required' })
+    }
     return respond(req, 502, { error: error.message, code: 'upstream' })
   }
   // Unknown failure: log only the type, never the message (it could echo upstream data).
@@ -29,12 +31,20 @@ function fail(req: Request, error: unknown): Response {
 }
 
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: corsHeaders(req) })
-  if (req.method !== 'POST') return respond(req, 405, { error: 'Method not allowed' })
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { status: 204, headers: corsHeaders(req) })
+  }
+  if (req.method !== 'POST') {
+    return respond(req, 405, { error: 'Method not allowed' })
+  }
 
   const userId = await callerId(req)
-  if (!userId) return respond(req, 401, { error: 'Not signed in' })
-  if (!throttle(userId, 60, 60_000)) return respond(req, 429, { error: 'Too many requests', code: 'rate_limited' })
+  if (!userId) {
+    return respond(req, 401, { error: 'Not signed in' })
+  }
+  if (!throttle(userId, 60, 60_000)) {
+    return respond(req, 429, { error: 'Too many requests', code: 'rate_limited' })
+  }
 
   let body: { action?: string, refreshToken?: unknown }
   try {
@@ -54,9 +64,13 @@ Deno.serve(async (req) => {
       }
 
       case 'connect': {
-        if (!throttle(`connect:${userId}`, 5, 60_000)) return respond(req, 429, { error: 'Too many attempts. Wait a minute.', code: 'rate_limited' })
+        if (!throttle(`connect:${userId}`, 5, 60_000)) {
+          return respond(req, 429, { error: 'Too many attempts. Wait a minute.', code: 'rate_limited' })
+        }
         const refreshToken = typeof body.refreshToken === 'string' ? body.refreshToken.trim() : ''
-        if (!JWT_SHAPE.test(refreshToken)) return respond(req, 400, { error: 'That does not look like a TopLogger refresh token.', code: 'invalid_token' })
+        if (!JWT_SHAPE.test(refreshToken)) {
+          return respond(req, 400, { error: 'That does not look like a TopLogger refresh token.', code: 'invalid_token' })
+        }
         // Validate by exchanging first: a bad token never replaces an existing connection.
         let tokens
         try {

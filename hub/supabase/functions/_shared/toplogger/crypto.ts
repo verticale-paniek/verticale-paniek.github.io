@@ -15,7 +15,9 @@ export async function importKey(base64Key: string): Promise<CryptoKey> {
   catch {
     raw = new Uint8Array()
   }
-  if (raw.length !== 32) throw new Error('TOPLOGGER_ENCRYPTION_KEY must be 32 bytes, base64 encoded')
+  if (raw.length !== 32) {
+    throw new Error('TOPLOGGER_ENCRYPTION_KEY must be 32 bytes, base64 encoded')
+  }
   return crypto.subtle.importKey('raw', raw as BufferSource, 'AES-GCM', false, ['encrypt', 'decrypt'])
 }
 

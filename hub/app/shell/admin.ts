@@ -25,7 +25,9 @@ export async function adminCall<T>(supabase: SupabaseClient, body: AdminRequest)
     const context = (error as { context?: unknown }).context
     if (context instanceof Response) {
       const payload = await context.json().catch(() => null)
-      if (payload?.error) message = payload.error
+      if (payload?.error) {
+        message = payload.error
+      }
     }
     throw new Error(message)
   }

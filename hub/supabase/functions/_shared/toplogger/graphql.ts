@@ -18,9 +18,15 @@ export class TopLoggerError extends Error {
 export function interpret<T>(status: number, body: unknown): T {
   const payload = body as { data?: T, errors?: { extensions?: { code?: unknown } }[] } | null
   const codes = (payload?.errors ?? []).map(e => e?.extensions?.code).filter((c): c is string => typeof c === 'string')
-  if (status === 401 || codes.includes('UNAUTHENTICATED')) throw new TopLoggerError('auth', 'TopLogger rejected the session.')
-  if (status === 403) throw new TopLoggerError('api', 'TopLogger did not allow this request.')
-  if (status >= 500) throw new TopLoggerError('network', 'TopLogger is temporarily unavailable.')
+  if (status === 401 || codes.includes('UNAUTHENTICATED')) {
+    throw new TopLoggerError('auth', 'TopLogger rejected the session.')
+  }
+  if (status === 403) {
+    throw new TopLoggerError('api', 'TopLogger did not allow this request.')
+  }
+  if (status >= 500) {
+    throw new TopLoggerError('network', 'TopLogger is temporarily unavailable.')
+  }
   if (status >= 400 || payload?.errors?.length || !payload?.data) {
     const code = codes[0] && /^[A-Z_]{1,40}$/.test(codes[0]) ? ` (${codes[0]})` : ''
     throw new TopLoggerError('api', `TopLogger could not handle the request${code}.`)
@@ -58,6 +64,8 @@ export function validTokens(value: unknown): value is TokenPair {
 /** Exchanges a (single-use) refresh token for a new pair. The old refresh token is dead afterwards. */
 export async function exchangeRefreshToken(refreshToken: string): Promise<TokenPair> {
   const data = await graphql<{ tokens: unknown }>(REFRESH, { refreshToken }, refreshToken)
-  if (!validTokens(data.tokens)) throw new TopLoggerError('api', 'TopLogger returned an incomplete connection.')
+  if (!validTokens(data.tokens)) {
+    throw new TopLoggerError('api', 'TopLogger returned an incomplete connection.')
+  }
   return data.tokens
 }

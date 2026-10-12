@@ -13,7 +13,9 @@ export function buildRegistry(imports: Record<string, ManifestImport>): ModuleMa
     if (manifest.id !== folder) {
       throw new Error(`Module manifest id "${manifest.id}" must match its folder "${folder}"`)
     }
-    if (seen.has(manifest.id)) throw new Error(`Duplicate module id "${manifest.id}"`)
+    if (seen.has(manifest.id)) {
+      throw new Error(`Duplicate module id "${manifest.id}"`)
+    }
     seen.add(manifest.id)
     manifests.push(manifest)
   }

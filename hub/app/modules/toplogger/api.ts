@@ -38,7 +38,9 @@ export async function toploggerCall<T>(supabase: SupabaseClient, body: TopLogger
     const context = (error as { context?: unknown }).context
     if (context instanceof Response) {
       const payload = await context.json().catch(() => null)
-      if (payload?.error) message = payload.error
+      if (payload?.error) {
+        message = payload.error
+      }
       code = payload?.code
     }
     throw new TopLoggerApiError(message, code)

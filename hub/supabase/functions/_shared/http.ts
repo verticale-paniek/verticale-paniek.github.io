@@ -24,7 +24,9 @@ export function respond(req: Request, status: number, body: unknown): Response {
 /** Verifies the caller's Supabase JWT locally (cached signing keys) and returns the user id, or null. */
 export async function callerId(req: Request): Promise<string | null> {
   const token = req.headers.get('Authorization')?.replace(/^Bearer\s+/i, '')
-  if (!token) return null
+  if (!token) {
+    return null
+  }
   const { data, error } = await adminClient().auth.getClaims(token)
   return error || !data?.claims?.sub ? null : data.claims.sub
 }

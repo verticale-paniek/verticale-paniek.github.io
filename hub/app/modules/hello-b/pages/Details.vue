@@ -1,15 +1,14 @@
-<script setup lang="ts">
-const online = ref(true)
-onMounted(() => {
-  online.value = navigator.onLine
-  window.addEventListener('online', () => (online.value = true))
-  window.addEventListener('offline', () => (online.value = false))
-})
-</script>
-
 <template>
   <section>
-    <h1>Details</h1>
-    <p>You are {{ online ? 'online' : 'offline' }}.</p>
+    <h1 class="my-[0.67em] text-[2em] font-bold">
+      Details
+    </h1>
+    <p class="my-4">
+      You are {{ online ? 'online' : 'offline' }}.
+    </p>
   </section>
 </template>
+
+<script setup lang="ts">
+const online = useOnline()
+</script>

@@ -15,7 +15,9 @@ const CONCURRENCY = 5
 async function sameSecret(a: string, b: string): Promise<boolean> {
   const [x, y] = await Promise.all([a, b].map(async s => new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)))))
   let diff = 0
-  for (let i = 0; i < x!.length; i++) diff |= x![i]! ^ y![i]!
+  for (let i = 0; i < x!.length; i++) {
+    diff |= x![i]! ^ y![i]!
+  }
   return diff === 0
 }
 
@@ -35,13 +37,23 @@ Deno.serve(async (req) => {
     for (let userId = queue.shift(); userId; userId = queue.shift()) {
       try {
         const outcome = await renewConnection(userId)
-        if (outcome === 'renewed') result.renewed++
-        else result.skipped++
+        if (outcome === 'renewed') {
+          result.renewed++
+        }
+        else {
+          result.skipped++
+        }
       }
       catch (error) {
-        if (error instanceof ConnectionError && error.code === 'reconnect_required') result.reconnectRequired++
-        else result.failed++
-        if (!(error instanceof ConnectionError || error instanceof TopLoggerError)) console.error('toplogger-refresh: unexpected error', (error as Error)?.name)
+        if (error instanceof ConnectionError && error.code === 'reconnect_required') {
+          result.reconnectRequired++
+        }
+        else {
+          result.failed++
+        }
+        if (!(error instanceof ConnectionError || error instanceof TopLoggerError)) {
+          console.error('toplogger-refresh: unexpected error', (error as Error)?.name)
+        }
       }
     }
   }))

@@ -1,39 +1,28 @@
-:root {
-  --bg: #222021;
-  --surface: #2e2c2d;
-  --text: #f1f3f8;
-  --muted: #9aa3b5;
-  --accent: #ff8c38;
-  color-scheme: dark;
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: system-ui, sans-serif;
+  --color-bg: #f1f3f8;
+  --color-surface: #fff;
+  --color-text: #222021;
+  --color-muted: #5b6475;
+  --color-accent: #b94a00;
+  --color-error: #b42318;
+  --color-outline: #c6c9d1;
 }
-* { box-sizing: border-box; }
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--text);
-  font: 16px/1.5 system-ui, sans-serif;
+
+@layer base {
+  html { @apply bg-bg text-text scheme-light; }
+  .dark {
+    @apply scheme-dark;
+    --color-bg: #222021;
+    --color-surface: #2e2c2d;
+    --color-text: #f1f3f8;
+    --color-muted: #9aa3b5;
+    --color-accent: #ff8c38;
+    --color-error: #ff8a80;
+    --color-outline: #4a4647;
+  }
 }
-a { color: var(--accent); }
-button {
-  font: inherit;
-  color: var(--bg);
-  background: var(--accent);
-  border: 0;
-  border-radius: 8px;
-  padding: 0.5rem 1rem;
-}
-button.ghost { background: transparent; color: var(--muted); }
-button.danger { background: #d9534f; color: #fff; }
-button:disabled { opacity: 0.5; }
-form { display: grid; gap: 0.75rem; max-width: 24rem; }
-label { display: grid; gap: 0.25rem; color: var(--muted); font-size: 0.9rem; }
-input {
-  font: inherit;
-  color: var(--text);
-  background: var(--surface);
-  border: 1px solid #4a4647;
-  border-radius: 8px;
-  padding: 0.5rem 0.75rem;
-}
-.error { color: #ff8a80; }
-.notice { color: var(--muted); }

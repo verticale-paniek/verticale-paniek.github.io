@@ -41,11 +41,17 @@ function respond(req: Request, status: number, body: unknown): Response {
 }
 
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: corsHeaders(req) })
-  if (req.method !== 'POST') return respond(req, 405, { error: 'Method not allowed' })
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { status: 204, headers: corsHeaders(req) })
+  }
+  if (req.method !== 'POST') {
+    return respond(req, 405, { error: 'Method not allowed' })
+  }
 
   const token = req.headers.get('Authorization')?.replace(/^Bearer\s+/i, '')
-  if (!token) return respond(req, 401, { error: 'Not signed in' })
+  if (!token) {
+    return respond(req, 401, { error: 'Not signed in' })
+  }
 
   const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, {
     auth: { persistSession: false, autoRefreshToken: false },
@@ -56,8 +62,12 @@ Deno.serve(async (req) => {
   // Trade-off: a role change or ban only takes effect when the caller's access token is refreshed (<= 1 hour).
   const { data: verified, error: authError } = await admin.auth.getClaims(token)
   const claims = verified?.claims
-  if (authError || !claims?.sub) return respond(req, 401, { error: 'Not signed in' })
-  if (claims.app_metadata?.role !== 'admin') return respond(req, 403, { error: 'Admins only' })
+  if (authError || !claims?.sub) {
+    return respond(req, 401, { error: 'Not signed in' })
+  }
+  if (claims.app_metadata?.role !== 'admin') {
+    return respond(req, 403, { error: 'Admins only' })
+  }
   const callerId = claims.sub
 
   let body: { action?: string, email?: string, id?: string, banned?: boolean }
@@ -71,7 +81,9 @@ Deno.serve(async (req) => {
   switch (body.action) {
     case 'list': {
       const { data, error } = await admin.auth.admin.listUsers({ page: 1, perPage: 200 })
-      if (error) return respond(req, 500, { error: error.message })
+      if (error) {
+        return respond(req, 500, { error: error.message })
+      }
       const users = data.users.map(u => ({
         id: u.id,
         email: u.email ?? null,
@@ -86,40 +98,66 @@ Deno.serve(async (req) => {
 
     case 'invite': {
       const email = body.email?.trim().toLowerCase()
-      if (!email || !EMAIL.test(email)) return respond(req, 400, { error: 'Enter a valid email address' })
+      if (!email || !EMAIL.test(email)) {
+        return respond(req, 400, { error: 'Enter a valid email address' })
+      }
       // Creates the (unconfirmed) user and returns a one-time link, without sending any email.
       const { data, error } = await admin.auth.admin.generateLink({ type: 'invite', email })
-      if (error) return respond(req, 400, { error: error.message })
+      if (error) {
+        return respond(req, 400, { error: error.message })
+      }
       return respond(req, 200, { link: confirmLink(req, data.properties.hashed_token, 'invite') })
     }
 
     case 'link': {
       // New sign-in link for an existing member: forgotten password, or an invite that expired.
-      if (!body.id) return respond(req, 400, { error: 'Invalid request' })
+      if (!body.id) {
+        return respond(req, 400, { error: 'Invalid request' })
+      }
       const { data: target, error: lookupError } = await admin.auth.admin.getUserById(body.id)
-      if (lookupError || !target.user?.email) return respond(req, 400, { error: 'User not found' })
+      if (lookupError || !target.user?.email) {
+        return respond(req, 400, { error: 'User not found' })
+      }
       const { data, error } = await admin.auth.admin.generateLink({ type: 'recovery', email: target.user.email })
-      if (error) return respond(req, 400, { error: error.message })
+      if (error) {
+        return respond(req, 400, { error: error.message })
+      }
       return respond(req, 200, { link: confirmLink(req, data.properties.hashed_token, 'recovery') })
     }
 
     case 'set-banned': {
-      if (!body.id || typeof body.banned !== 'boolean') return respond(req, 400, { error: 'Invalid request' })
-      if (body.id === callerId) return respond(req, 400, { error: 'You cannot disable your own account' })
-      if (await isAdminId(admin, body.id)) return respond(req, 403, { error: ADMIN_PROTECTED })
+      if (!body.id || typeof body.banned !== 'boolean') {
+        return respond(req, 400, { error: 'Invalid request' })
+      }
+      if (body.id === callerId) {
+        return respond(req, 400, { error: 'You cannot disable your own account' })
+      }
+      if (await isAdminId(admin, body.id)) {
+        return respond(req, 403, { error: ADMIN_PROTECTED })
+      }
       const { error } = await admin.auth.admin.updateUserById(body.id, {
         ban_duration: body.banned ? BAN_FOREVER : 'none',
       })
-      if (error) return respond(req, 400, { error: error.message })
+      if (error) {
+        return respond(req, 400, { error: error.message })
+      }
       return respond(req, 200, { ok: true })
     }
 
     case 'delete': {
-      if (!body.id) return respond(req, 400, { error: 'Invalid request' })
-      if (body.id === callerId) return respond(req, 400, { error: 'You cannot delete your own account' })
-      if (await isAdminId(admin, body.id)) return respond(req, 403, { error: ADMIN_PROTECTED })
+      if (!body.id) {
+        return respond(req, 400, { error: 'Invalid request' })
+      }
+      if (body.id === callerId) {
+        return respond(req, 400, { error: 'You cannot delete your own account' })
+      }
+      if (await isAdminId(admin, body.id)) {
+        return respond(req, 403, { error: ADMIN_PROTECTED })
+      }
       const { error } = await admin.auth.admin.deleteUser(body.id)
-      if (error) return respond(req, 400, { error: error.message })
+      if (error) {
+        return respond(req, 400, { error: error.message })
+      }
       return respond(req, 200, { ok: true })
     }
 

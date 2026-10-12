@@ -1,19 +1,33 @@
+import tailwindcss from '@tailwindcss/vite'
+
 const sha = process.env.GITHUB_SHA?.slice(0, 7)
 
 export default defineNuxtConfig({
-  compatibilityDate: '2026-10-01',
+
+  modules: ['@vite-pwa/nuxt', '@nuxt/eslint', 'reka-ui/nuxt', '@nuxt/icon', '@vueuse/nuxt'],
   ssr: false,
   pages: true,
   devtools: { enabled: false },
-  modules: ['@vite-pwa/nuxt', '@nuxt/eslint'],
+
+  app: {
+    head: {
+      title: 'Verticale Paniek',
+      meta: [
+        { name: 'theme-color', content: '#222021' },
+        { name: 'color-scheme', content: 'dark light' },
+        { name: 'description', content: 'Hub for the Verticale Paniek climbing group' },
+      ],
+      link: [
+        { rel: 'icon', type: 'image/png', href: '/favicon.png' },
+        { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
+      ],
+    },
+  },
   css: ['~/assets/main.css'],
 
   // GitHub Pages cannot rewrite deep links, so routes live after the `#`.
   // Site is served at the origin root (verticale-paniek.github.io), so baseURL stays `/`.
   router: { options: { hashMode: true } },
-
-  // Source maps stay on in production: we debug the deployed build from phone devtools.
-  sourcemap: { client: true, server: false },
 
   runtimeConfig: {
     public: {
@@ -25,19 +39,11 @@ export default defineNuxtConfig({
     },
   },
 
-  app: {
-    head: {
-      title: 'Verticale Paniek',
-      meta: [
-        { name: 'theme-color', content: '#222021' },
-        { name: 'description', content: 'Hub for the Verticale Paniek climbing group' },
-      ],
-      link: [
-        { rel: 'icon', type: 'image/png', href: '/favicon.png' },
-        { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
-      ],
-    },
-  },
+  // Source maps stay on in production: we debug the deployed build from phone devtools.
+  sourcemap: { client: true, server: false }, compatibilityDate: '2026-10-01',
+  vite: { plugins: [tailwindcss()] },
+  eslint: { config: { stylistic: true } },
+  icon: { provider: 'none', clientBundle: { scan: true } },
 
   pwa: {
     // 'prompt': a new service worker waits until the user taps "Update" (see UpdatePrompt.vue).

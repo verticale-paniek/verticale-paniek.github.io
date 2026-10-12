@@ -1,3 +1,144 @@
+<template>
+  <section>
+    <h1 class="my-[0.67em] text-[2em] font-bold">
+      Admin
+    </h1>
+    <h2 class="my-[0.83em] text-[1.5em] font-bold">
+      Members
+    </h2>
+    <form
+      class="grid max-w-96 gap-3"
+      @submit.prevent="invite"
+    >
+      <Label class="grid gap-1 text-[0.9rem] text-muted">Invite by email <input
+        v-model="inviteEmail"
+        class="rounded-lg border border-outline bg-surface px-3 py-2 text-text"
+        type="email"
+        required
+      ></Label>
+      <button
+        class="rounded-lg bg-accent px-4 py-2 text-bg disabled:opacity-50"
+        :disabled="busy"
+      >
+        Create invite link
+      </button>
+    </form>
+    <p
+      v-if="error"
+      class="my-4 text-error"
+      role="alert"
+    >
+      {{ error }}
+    </p>
+    <p
+      v-if="info"
+      class="my-4 text-muted"
+    >
+      {{ info }}
+    </p>
+
+    <div
+      v-if="shared"
+      class="my-4 grid gap-2 rounded-xl bg-surface px-4 py-3"
+    >
+      <p class="m-0">
+        <strong>{{ shared.kind === 'invite' ? 'Invite' : 'New sign-in link' }} for {{ shared.email }}</strong><br>
+        <small class="text-[smaller] block text-muted">One-time link, send it only to this person. It expires after a while; create a new one if it stops working.</small>
+      </p>
+      <input
+        class="rounded-lg border border-outline bg-surface px-3 py-2 text-text"
+        :value="shared.link"
+        readonly
+        aria-label="Link"
+        @focus="($event.target as HTMLInputElement).select()"
+      >
+      <div class="flex flex-wrap items-center gap-2">
+        <button
+          class="rounded-lg bg-accent px-4 py-2 text-bg disabled:opacity-50"
+          @click="copy"
+        >
+          Copy
+        </button>
+        <a
+          class="text-accent underline"
+          :href="whatsappShareUrl(shared.link, shared.kind)"
+          target="_blank"
+          rel="noopener"
+        >Share via WhatsApp</a>
+        <button
+          class="rounded-lg px-4 py-2 disabled:opacity-50 bg-transparent text-muted"
+          @click="shared = null"
+        >
+          Done
+        </button>
+      </div>
+    </div>
+
+    <ul class="my-4 grid list-none gap-2 p-0">
+      <li
+        v-for="u in users"
+        :key="u.id"
+        class="grid gap-2 rounded-xl bg-surface px-4 py-3"
+      >
+        <div>
+          <strong>{{ u.email }}</strong>
+          <small class="text-[smaller] block text-muted">
+            {{ u.role === 'admin' ? 'admin · ' : '' }}{{ u.banned ? 'disabled' : u.confirmed ? 'active' : 'invited' }}
+          </small>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <button
+            class="rounded-lg px-4 py-2 disabled:opacity-50 bg-transparent text-muted"
+            :disabled="busy"
+            @click="newLink(u)"
+          >
+            New link
+          </button>
+          <template v-if="u.role !== 'admin'">
+            <button
+              class="rounded-lg px-4 py-2 disabled:opacity-50 bg-transparent text-muted"
+              :disabled="busy"
+              @click="toggleBan(u)"
+            >
+              {{ u.banned ? 'Enable' : 'Disable' }}
+            </button>
+            <AlertDialogRoot>
+              <AlertDialogTrigger
+                class="rounded-lg bg-[#d9534f] px-4 py-2 text-white disabled:opacity-50"
+                :disabled="busy"
+              >
+                Delete
+              </AlertDialogTrigger>
+              <AlertDialogPortal>
+                <AlertDialogOverlay class="fixed inset-0 bg-black/60" />
+                <AlertDialogContent class="fixed left-1/2 top-1/2 w-[calc(100%-2rem)] max-w-96 break-words -translate-x-1/2 -translate-y-1/2 rounded-xl bg-surface p-4 shadow-xl">
+                  <AlertDialogTitle class="mt-0 text-xl">
+                    Delete {{ u.email }}?
+                  </AlertDialogTitle>
+                  <AlertDialogDescription class="my-4">
+                    This also removes their data. This cannot be undone.
+                  </AlertDialogDescription>
+                  <div class="flex justify-end gap-2">
+                    <AlertDialogCancel class="rounded-lg bg-transparent px-4 py-2 text-muted">
+                      Cancel
+                    </AlertDialogCancel>
+                    <AlertDialogAction
+                      class="rounded-lg bg-[#d9534f] px-4 py-2 text-white"
+                      @click="remove(u)"
+                    >
+                      Delete
+                    </AlertDialogAction>
+                  </div>
+                </AlertDialogContent>
+              </AlertDialogPortal>
+            </AlertDialogRoot>
+          </template>
+        </div>
+      </li>
+    </ul>
+  </section>
+</template>
+
 <script setup lang="ts">
 import { adminCall, whatsappShareUrl, type AdminUser } from '~/shell/admin'
 
@@ -42,11 +183,15 @@ async function invite() {
 
 async function newLink(u: AdminUser) {
   const result = await run(() => adminCall<{ link: string }>(supabase, { action: 'link', id: u.id }))
-  if (result) shared.value = { email: u.email ?? '', link: result.link, kind: 'link' }
+  if (result) {
+    shared.value = { email: u.email ?? '', link: result.link, kind: 'link' }
+  }
 }
 
 async function copy() {
-  if (!shared.value) return
+  if (!shared.value) {
+    return
+  }
   try {
     await navigator.clipboard.writeText(shared.value.link)
     info.value = 'Link copied.'
@@ -62,61 +207,7 @@ async function toggleBan(u: AdminUser) {
 }
 
 async function remove(u: AdminUser) {
-  if (!confirm(`Delete ${u.email}? This also removes their data.`)) return
   await run(() => adminCall(supabase, { action: 'delete', id: u.id }))
   await refresh()
 }
 </script>
-
-<template>
-  <section>
-    <h1>Admin</h1>
-    <h2>Members</h2>
-    <form @submit.prevent="invite">
-      <label>Invite by email <input v-model="inviteEmail" type="email" required></label>
-      <button :disabled="busy">Create invite link</button>
-    </form>
-    <p v-if="error" class="error" role="alert">{{ error }}</p>
-    <p v-if="info" class="notice">{{ info }}</p>
-
-    <div v-if="shared" class="link-box">
-      <p>
-        <strong>{{ shared.kind === 'invite' ? 'Invite' : 'New sign-in link' }} for {{ shared.email }}</strong><br>
-        <small>One-time link, send it only to this person. It expires after a while; create a new one if it stops working.</small>
-      </p>
-      <input :value="shared.link" readonly aria-label="Link" @focus="($event.target as HTMLInputElement).select()">
-      <div class="actions">
-        <button @click="copy">Copy</button>
-        <a :href="whatsappShareUrl(shared.link, shared.kind)" target="_blank" rel="noopener">Share via WhatsApp</a>
-        <button class="ghost" @click="shared = null">Done</button>
-      </div>
-    </div>
-
-    <ul class="users">
-      <li v-for="u in users" :key="u.id">
-        <div>
-          <strong>{{ u.email }}</strong>
-          <small>
-            {{ u.role === 'admin' ? 'admin · ' : '' }}{{ u.banned ? 'disabled' : u.confirmed ? 'active' : 'invited' }}
-          </small>
-        </div>
-        <div class="actions">
-          <button class="ghost" :disabled="busy" @click="newLink(u)">New link</button>
-          <template v-if="u.role !== 'admin'">
-            <button class="ghost" :disabled="busy" @click="toggleBan(u)">{{ u.banned ? 'Enable' : 'Disable' }}</button>
-            <button class="danger" :disabled="busy" @click="remove(u)">Delete</button>
-          </template>
-        </div>
-      </li>
-    </ul>
-  </section>
-</template>
-
-<style scoped>
-.users { list-style: none; padding: 0; display: grid; gap: 0.5rem; }
-.users li { display: grid; gap: 0.5rem; padding: 0.75rem 1rem; border-radius: 12px; background: var(--surface); }
-.link-box { display: grid; gap: 0.5rem; padding: 0.75rem 1rem; margin: 1rem 0; border-radius: 12px; background: var(--surface); }
-.link-box p { margin: 0; }
-small { display: block; color: var(--muted); }
-.actions { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
-</style>

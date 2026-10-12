@@ -64,28 +64,36 @@ async function open(row: Row): Promise<TokenPair> {
 
 async function readRow(userId: string): Promise<Row | null> {
   const { data, error } = await adminClient().from(TABLE).select('*').eq('user_id', userId).maybeSingle()
-  if (error) throw new ConnectionError('storage', 'Could not read your connection.')
+  if (error) {
+    throw new ConnectionError('storage', 'Could not read your connection.')
+  }
   return data as Row | null
 }
 
 /** Stores a freshly validated token pair, replacing any previous connection. */
 export async function saveConnection(userId: string, tokens: TokenPair): Promise<void> {
   const { error } = await adminClient().from(TABLE).upsert({ user_id: userId, ...(await seal(userId, tokens)) })
-  if (error) throw new ConnectionError('storage', 'Could not save your connection.')
+  if (error) {
+    throw new ConnectionError('storage', 'Could not save your connection.')
+  }
   cache.set(userId, tokens.access)
 }
 
 export async function deleteConnection(userId: string): Promise<void> {
   cache.delete(userId)
   const { error } = await adminClient().from(TABLE).delete().eq('user_id', userId)
-  if (error) throw new ConnectionError('storage', 'Could not remove your connection.')
+  if (error) {
+    throw new ConnectionError('storage', 'Could not remove your connection.')
+  }
 }
 
 /** Connection state for the UI. Never includes the ciphertext. */
 export async function connectionStatus(userId: string) {
   const { data, error } = await adminClient().from(TABLE)
     .select('status, refresh_expires_at, last_error, updated_at').eq('user_id', userId).maybeSingle()
-  if (error) throw new ConnectionError('storage', 'Could not read your connection.')
+  if (error) {
+    throw new ConnectionError('storage', 'Could not read your connection.')
+  }
   return data as { status: string, refresh_expires_at: string, last_error: string | null, updated_at: string } | null
 }
 
@@ -132,7 +140,9 @@ async function exchangeAndStore(row: Row, current: TokenPair): Promise<string> {
       .eq('user_id', row.user_id).eq('version', row.version).select('user_id')
     if (!error) {
       // Nothing updated: the user reconnected or disconnected meanwhile, so this pair is superseded.
-      if (!data?.length) throw new ConnectionError('busy', 'Your connection changed. Try again.')
+      if (!data?.length) {
+        throw new ConnectionError('busy', 'Your connection changed. Try again.')
+      }
       cache.set(row.user_id, tokens.access)
       return tokens.access.token
     }
@@ -148,14 +158,20 @@ async function exchangeAndStore(row: Row, current: TokenPair): Promise<string> {
  */
 export async function accessToken(userId: string, rejected?: string): Promise<string> {
   const cached = cache.get(userId)
-  if (cached && cached.token !== rejected && usable(cached.expiresAt)) return cached.token
+  if (cached && cached.token !== rejected && usable(cached.expiresAt)) {
+    return cached.token
+  }
   cache.delete(userId)
 
   const deadline = Date.now() + WAIT_MS
   while (true) {
     const row = await readRow(userId)
-    if (!row) throw new ConnectionError('not_connected', 'Connect your TopLogger account first.')
-    if (row.status !== 'connected') throw new ConnectionError('reconnect_required', 'Your TopLogger connection expired. Connect again.')
+    if (!row) {
+      throw new ConnectionError('not_connected', 'Connect your TopLogger account first.')
+    }
+    if (row.status !== 'connected') {
+      throw new ConnectionError('reconnect_required', 'Your TopLogger connection expired. Connect again.')
+    }
 
     const tokens = await open(row)
     if (tokens.access.token !== rejected && usable(tokens.access.expiresAt)) {
@@ -166,9 +182,13 @@ export async function accessToken(userId: string, rejected?: string): Promise<st
       await markReconnect(row, 'Refresh token expired.')
       throw new ConnectionError('reconnect_required', 'Your TopLogger connection expired. Connect again.')
     }
-    if (await claimLease(row)) return exchangeAndStore(row, tokens)
+    if (await claimLease(row)) {
+      return exchangeAndStore(row, tokens)
+    }
 
-    if (Date.now() > deadline) throw new ConnectionError('busy', 'TopLogger is busy. Try again.')
+    if (Date.now() > deadline) {
+      throw new ConnectionError('busy', 'TopLogger is busy. Try again.')
+    }
     await sleep(400) // someone else holds the lease: wait for their result
   }
 }
@@ -178,7 +198,9 @@ export async function dueConnections(cutoff: Date, limit: number): Promise<strin
   const { data, error } = await adminClient().from(TABLE).select('user_id')
     .eq('status', 'connected').lt('refresh_expires_at', cutoff.toISOString())
     .order('refresh_expires_at').limit(limit)
-  if (error) throw new ConnectionError('storage', 'Could not list connections.')
+  if (error) {
+    throw new ConnectionError('storage', 'Could not list connections.')
+  }
   return (data ?? []).map(row => row.user_id as string)
 }
 
@@ -188,13 +210,17 @@ export async function dueConnections(cutoff: Date, limit: number): Promise<strin
  */
 export async function renewConnection(userId: string): Promise<'renewed' | 'skipped'> {
   const row = await readRow(userId)
-  if (!row || row.status !== 'connected') return 'skipped'
+  if (!row || row.status !== 'connected') {
+    return 'skipped'
+  }
   const tokens = await open(row)
   if (Date.parse(tokens.refresh.expiresAt) <= Date.now()) {
     await markReconnect(row, 'Refresh token expired.')
     throw new ConnectionError('reconnect_required', 'Connection expired.')
   }
-  if (!(await claimLease(row))) return 'skipped'
+  if (!(await claimLease(row))) {
+    return 'skipped'
+  }
   await exchangeAndStore(row, tokens)
   return 'renewed'
 }
@@ -206,7 +232,9 @@ export async function readWithAccess<T>(userId: string, call: (token: string) =>
     return await call(token)
   }
   catch (error) {
-    if (!(error instanceof TopLoggerError) || error.kind !== 'auth') throw error
+    if (!(error instanceof TopLoggerError) || error.kind !== 'auth') {
+      throw error
+    }
     return call(await accessToken(userId, token))
   }
 }
