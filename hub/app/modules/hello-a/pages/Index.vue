@@ -1,13 +1,13 @@
 <template>
   <section>
-    <h1 class="my-[0.67em] text-[2em] font-bold">
+    <h1 class="mb-6 text-2xl font-semibold tracking-tight sm:text-3xl">
       Hello A
     </h1>
     <p class="my-4">
       Taps: {{ count }}
     </p>
     <button
-      class="rounded-lg bg-accent px-4 py-2 text-bg disabled:opacity-50"
+      class="min-h-11 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-bg transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50"
       @click="tap"
     >
       Tap

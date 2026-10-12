@@ -1,6 +1,6 @@
 <template>
   <section>
-    <h1 class="my-[0.67em] text-[2em] font-bold">
+    <h1 class="mb-6 text-2xl font-semibold tracking-tight sm:text-3xl">
       TopLogger
     </h1>
     <p
@@ -14,16 +14,16 @@
       <p class="my-4">
         Connected. Last refreshed {{ new Date(state.updatedAt!).toLocaleString() }}; valid until {{ new Date(state.refreshExpiresAt!).toLocaleString() }} and renewed whenever it is used.
       </p>
-      <p class="my-4">
+      <p class="my-4 flex flex-wrap gap-3">
         <button
-          class="rounded-lg bg-accent px-4 py-2 text-bg disabled:opacity-50"
+          class="min-h-11 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-bg transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50"
           :disabled="busy"
           @click="loadProfile"
         >
           Load my profile
         </button>
         <button
-          class="rounded-lg bg-accent px-4 py-2 text-bg disabled:opacity-50"
+          class="min-h-11 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-bg transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50"
           :disabled="busy"
           @click="disconnect"
         >
@@ -50,20 +50,20 @@
         page. Each token works once, and connecting may sign you out of the TopLogger web app.
       </p>
       <form
-        class="grid max-w-96 gap-3"
+        class="grid max-w-96 gap-5"
         @submit.prevent="connect"
       >
-        <Label class="grid gap-1 text-[0.9rem] text-muted">Refresh token<br>
+        <Label class="grid gap-2 text-sm font-medium text-text">Refresh token<br>
           <input
             v-model="refreshToken"
-            class="w-full rounded-lg border border-outline bg-surface px-3 py-2 text-text"
+            class="w-full min-w-0 rounded-xl border border-outline bg-bg px-3 py-2.5 text-base text-text outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/20"
             type="password"
             autocomplete="off"
           >
         </Label>
         <p class="my-4">
           <button
-            class="rounded-lg bg-accent px-4 py-2 text-bg disabled:opacity-50"
+            class="min-h-11 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-bg transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50"
             type="submit"
             :disabled="busy || !refreshToken.trim()"
           >

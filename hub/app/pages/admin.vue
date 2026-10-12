@@ -1,23 +1,23 @@
 <template>
   <section>
-    <h1 class="my-[0.67em] text-[2em] font-bold">
+    <h1 class="mb-6 text-2xl font-semibold tracking-tight sm:text-3xl">
       Admin
     </h1>
-    <h2 class="my-[0.83em] text-[1.5em] font-bold">
+    <h2 class="mb-4 mt-8 text-lg font-semibold tracking-tight">
       Members
     </h2>
     <form
-      class="grid max-w-96 gap-3"
+      class="grid max-w-md gap-5 rounded-2xl border border-outline/50 bg-surface p-5 sm:p-6"
       @submit.prevent="invite"
     >
-      <Label class="grid gap-1 text-[0.9rem] text-muted">Invite by email <input
+      <Label class="grid gap-2 text-sm font-medium text-text">Invite by email <input
         v-model="inviteEmail"
-        class="rounded-lg border border-outline bg-surface px-3 py-2 text-text"
+        class="min-w-0 rounded-xl border border-outline bg-bg px-3 py-2.5 text-base text-text outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/20"
         type="email"
         required
       ></Label>
       <button
-        class="rounded-lg bg-accent px-4 py-2 text-bg disabled:opacity-50"
+        class="min-h-11 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-bg transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50"
         :disabled="busy"
       >
         Create invite link
@@ -39,14 +39,14 @@
 
     <div
       v-if="shared"
-      class="my-4 grid gap-2 rounded-xl bg-surface px-4 py-3"
+      class="my-6 grid gap-4 rounded-2xl border border-outline/50 bg-surface p-5"
     >
       <p class="m-0">
         <strong>{{ shared.kind === 'invite' ? 'Invite' : 'New sign-in link' }} for {{ shared.email }}</strong><br>
         <small class="text-[smaller] block text-muted">One-time link, send it only to this person. It expires after a while; create a new one if it stops working.</small>
       </p>
       <input
-        class="rounded-lg border border-outline bg-surface px-3 py-2 text-text"
+        class="min-w-0 rounded-xl border border-outline bg-bg px-3 py-2.5 text-base text-text outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/20"
         :value="shared.link"
         readonly
         aria-label="Link"
@@ -54,7 +54,7 @@
       >
       <div class="flex flex-wrap items-center gap-2">
         <button
-          class="rounded-lg bg-accent px-4 py-2 text-bg disabled:opacity-50"
+          class="min-h-11 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-bg transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50"
           @click="copy"
         >
           Copy
@@ -66,7 +66,7 @@
           rel="noopener"
         >Share via WhatsApp</a>
         <button
-          class="rounded-lg px-4 py-2 disabled:opacity-50 bg-transparent text-muted"
+          class="min-h-11 rounded-xl px-4 py-2.5 text-sm font-medium text-muted transition hover:bg-text/5 hover:text-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-50"
           @click="shared = null"
         >
           Done
@@ -74,21 +74,21 @@
       </div>
     </div>
 
-    <ul class="my-4 grid list-none gap-2 p-0">
+    <ul class="my-6 grid list-none gap-3 p-0">
       <li
         v-for="u in users"
         :key="u.id"
-        class="grid gap-2 rounded-xl bg-surface px-4 py-3"
+        class="grid gap-4 rounded-2xl border border-outline/50 bg-surface p-5 sm:flex sm:items-center sm:justify-between"
       >
         <div>
-          <strong>{{ u.email }}</strong>
+          <strong class="break-all text-sm font-semibold">{{ u.email }}</strong>
           <small class="text-[smaller] block text-muted">
             {{ u.role === 'admin' ? 'admin · ' : '' }}{{ u.banned ? 'disabled' : u.confirmed ? 'active' : 'invited' }}
           </small>
         </div>
         <div class="flex flex-wrap items-center gap-2">
           <button
-            class="rounded-lg px-4 py-2 disabled:opacity-50 bg-transparent text-muted"
+            class="min-h-11 rounded-xl px-4 py-2.5 text-sm font-medium text-muted transition hover:bg-text/5 hover:text-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-50"
             :disabled="busy"
             @click="newLink(u)"
           >
@@ -96,7 +96,7 @@
           </button>
           <template v-if="u.role !== 'admin'">
             <button
-              class="rounded-lg px-4 py-2 disabled:opacity-50 bg-transparent text-muted"
+              class="min-h-11 rounded-xl px-4 py-2.5 text-sm font-medium text-muted transition hover:bg-text/5 hover:text-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-50"
               :disabled="busy"
               @click="toggleBan(u)"
             >
@@ -104,26 +104,26 @@
             </button>
             <AlertDialogRoot>
               <AlertDialogTrigger
-                class="rounded-lg bg-[#d9534f] px-4 py-2 text-white disabled:opacity-50"
+                class="min-h-11 rounded-xl bg-[#b42318] px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-error disabled:opacity-50"
                 :disabled="busy"
               >
                 Delete
               </AlertDialogTrigger>
               <AlertDialogPortal>
                 <AlertDialogOverlay class="fixed inset-0 bg-black/60" />
-                <AlertDialogContent class="fixed left-1/2 top-1/2 w-[calc(100%-2rem)] max-w-96 break-words -translate-x-1/2 -translate-y-1/2 rounded-xl bg-surface p-4 shadow-xl">
-                  <AlertDialogTitle class="mt-0 text-xl">
+                <AlertDialogContent class="fixed left-1/2 top-1/2 w-[calc(100%-2rem)] max-w-96 break-words -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-outline/50 bg-surface p-6 shadow-xl">
+                  <AlertDialogTitle class="mt-0 text-lg font-semibold tracking-tight">
                     Delete {{ u.email }}?
                   </AlertDialogTitle>
                   <AlertDialogDescription class="my-4">
                     This also removes their data. This cannot be undone.
                   </AlertDialogDescription>
                   <div class="flex justify-end gap-2">
-                    <AlertDialogCancel class="rounded-lg bg-transparent px-4 py-2 text-muted">
+                    <AlertDialogCancel class="min-h-11 rounded-xl px-4 py-2.5 text-sm font-medium text-muted hover:bg-text/5 focus-visible:outline-2 focus-visible:outline-accent">
                       Cancel
                     </AlertDialogCancel>
                     <AlertDialogAction
-                      class="rounded-lg bg-[#d9534f] px-4 py-2 text-white"
+                      class="min-h-11 rounded-xl bg-[#b42318] px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-error"
                       @click="remove(u)"
                     >
                       Delete

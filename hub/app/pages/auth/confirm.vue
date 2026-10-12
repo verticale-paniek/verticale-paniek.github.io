@@ -1,6 +1,6 @@
 <template>
-  <section>
-    <h1 class="my-[0.67em] text-[2em] font-bold">
+  <section class="mx-auto max-w-md rounded-2xl border border-outline/50 bg-surface p-6 shadow-sm sm:mt-6 sm:p-8">
+    <h1 class="mb-6 text-2xl font-semibold tracking-tight sm:text-3xl">
       Verifying…
     </h1>
     <template v-if="error">

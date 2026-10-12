@@ -1,6 +1,6 @@
 <template>
   <section>
-    <h1 class="my-[0.67em] text-[2em] font-bold">
+    <h1 class="mb-6 text-2xl font-semibold tracking-tight sm:text-3xl">
       New module
     </h1>
   </section>

@@ -1,35 +1,37 @@
 <template>
-  <div class="flex min-h-dvh flex-col">
-    <header class="flex items-center gap-3 bg-surface px-4 py-3">
-      <NuxtLink
-        v-if="!isHome && user"
-        to="/"
-        class="text-xl no-underline"
-        aria-label="Back to launcher"
-      ><Icon
-        name="lucide:arrow-left"
-        aria-hidden="true"
-      /></NuxtLink>
-      <img
-        src="/favicon.png"
-        alt=""
-        width="28"
-        height="28"
-      >
-      <strong>Verticale Paniek</strong>
-      <span class="flex-1" />
-      <ThemeToggle />
-      <NuxtLink
-        v-if="user"
-        to="/account"
-        class="grid size-8 place-items-center rounded-full bg-accent font-bold text-bg no-underline"
-        aria-label="Account"
-      ><AvatarRoot><AvatarFallback>{{ initial }}</AvatarFallback></AvatarRoot></NuxtLink>
+  <div class="flex min-h-dvh flex-col antialiased">
+    <header class="border-b border-outline/50 bg-surface">
+      <div class="mx-auto flex max-w-4xl items-center gap-3 px-4 py-3 sm:px-8">
+        <NuxtLink
+          v-if="!isHome && user"
+          to="/"
+          class="grid size-10 shrink-0 place-items-center rounded-xl text-muted transition hover:bg-text/5 hover:text-text focus-visible:outline-2 focus-visible:outline-accent"
+          aria-label="Back to launcher"
+        ><Icon
+          name="lucide:arrow-left"
+          aria-hidden="true"
+        /></NuxtLink>
+        <img
+          src="/favicon.png"
+          alt=""
+          width="32"
+          height="32"
+        >
+        <strong class="text-sm font-semibold tracking-tight sm:text-base">Verticale Paniek</strong>
+        <span class="flex-1" />
+        <ThemeToggle />
+        <NuxtLink
+          v-if="user"
+          to="/account"
+          class="grid size-10 shrink-0 place-items-center rounded-full bg-accent/15 text-sm font-semibold text-accent transition hover:bg-accent/25 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+          aria-label="Account"
+        ><AvatarRoot><AvatarFallback>{{ initial }}</AvatarFallback></AvatarRoot></NuxtLink>
+      </div>
     </header>
-    <main class="flex-1 p-4">
+    <main class="mx-auto w-full max-w-4xl flex-1 px-4 py-8 sm:px-8 sm:py-12">
       <slot />
     </main>
-    <footer class="px-4 py-3 text-center text-[0.8rem] text-muted">
+    <footer class="px-4 pb-6 pt-4 text-center text-xs text-muted">
       <BuildVersion />
     </footer>
     <UpdatePrompt />

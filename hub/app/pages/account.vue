@@ -1,62 +1,63 @@
 <template>
-  <section v-if="user">
-    <h1 class="my-[0.67em] text-[2em] font-bold">
+  <section v-if="user" class="max-w-2xl">
+    <h1 class="mb-6 text-2xl font-semibold tracking-tight sm:text-3xl">
       Account
     </h1>
-    <dl class="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1">
+    <dl class="grid grid-cols-[max-content_minmax(0,1fr)] gap-x-6 gap-y-4 rounded-2xl border border-outline/50 bg-surface p-5 text-sm sm:p-6">
       <dt class="text-muted">
         Email
       </dt>
-      <dd class="m-0">
+      <dd class="m-0 break-words font-medium">
         {{ user.email }}
       </dd>
       <dt class="text-muted">
         Role
       </dt>
-      <dd class="m-0">
+      <dd class="m-0 break-words font-medium">
         {{ isAdmin ? 'Admin' : 'Member' }}
       </dd>
       <dt class="text-muted">
         Member since
       </dt>
-      <dd class="m-0">
+      <dd class="m-0 break-words font-medium">
         {{ formatDate(user.created_at) }}
       </dd>
       <dt class="text-muted">
         Last sign-in
       </dt>
-      <dd class="m-0">
+      <dd class="m-0 break-words font-medium">
         {{ formatDate(user.last_sign_in_at) }}
       </dd>
     </dl>
 
     <CollapsibleRoot :unmount-on-hide="false">
-      <CollapsibleTrigger class="my-4 cursor-pointer bg-transparent p-0 font-semibold text-text">
+      <CollapsibleTrigger class="mt-6 flex min-h-11 w-full items-center justify-between rounded-xl px-1 text-sm font-semibold text-text focus-visible:outline-2 focus-visible:outline-accent">
         Change password
+        <Icon name="lucide:chevron-down" class="text-muted" aria-hidden="true" />
       </CollapsibleTrigger>
       <CollapsibleContent>
         <form
-          class="mb-4 grid max-w-96 gap-3"
+          class="mb-4 mt-4 grid max-w-96 gap-5"
           @submit.prevent="changePassword"
         >
-          <Label class="grid gap-1 text-[0.9rem] text-muted">Current password <input
+          <Label class="grid gap-2 text-sm font-medium text-text">Current password <input
             v-model="current"
-            class="rounded-lg border border-outline bg-surface px-3 py-2 text-text"
+            class="min-w-0 rounded-xl border border-outline bg-bg px-3 py-2.5 text-base text-text outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/20"
             type="password"
             autocomplete="current-password"
             required
           ></Label>
-          <Label class="grid gap-1 text-[0.9rem] text-muted">New password <input
+          <Label class="grid gap-2 text-sm font-medium text-text">New password <input
             v-model="password"
-            class="rounded-lg border border-outline bg-surface px-3 py-2 text-text"
+            class="min-w-0 rounded-xl border border-outline bg-bg px-3 py-2.5 text-base text-text outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/20"
             type="password"
             autocomplete="new-password"
             :minlength="MIN_PASSWORD_LENGTH"
             required
           ></Label>
-          <Label class="grid gap-1 text-[0.9rem] text-muted">Repeat password <input
+          <Label class="grid gap-2 text-sm font-medium text-text">Repeat password <input
             v-model="confirm"
-            class="rounded-lg border border-outline bg-surface px-3 py-2 text-text"
+            class="min-w-0 rounded-xl border border-outline bg-bg px-3 py-2.5 text-base text-text outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/20"
             type="password"
             autocomplete="new-password"
             required
@@ -75,7 +76,7 @@
             Password changed.
           </p>
           <button
-            class="rounded-lg bg-accent px-4 py-2 text-bg disabled:opacity-50"
+            class="min-h-11 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-bg transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50"
             :disabled="busy"
           >
             Change password
@@ -86,7 +87,7 @@
 
     <p class="my-4">
       <button
-        class="rounded-lg px-4 py-2 disabled:opacity-50 bg-transparent text-muted"
+        class="min-h-11 rounded-xl px-4 py-2.5 text-sm font-medium text-muted transition hover:bg-text/5 hover:text-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-50"
         @click="signOut()"
       >
         Sign out
@@ -98,7 +99,7 @@
       class="my-4"
     >
       <button
-        class="rounded-lg bg-accent px-4 py-2 text-bg disabled:opacity-50"
+        class="min-h-11 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-bg transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50"
         @click="navigateTo('/admin')"
       >
         Admin

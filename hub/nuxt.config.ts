@@ -13,7 +13,7 @@ export default defineNuxtConfig({
     head: {
       title: 'Verticale Paniek',
       meta: [
-        { name: 'theme-color', content: '#222021' },
+        { name: 'theme-color', content: '#0f172a' },
         { name: 'color-scheme', content: 'dark light' },
         { name: 'description', content: 'Hub for the Verticale Paniek climbing group' },
       ],
@@ -55,8 +55,8 @@ export default defineNuxtConfig({
       short_name: 'Paniek',
       description: 'Hub for the Verticale Paniek climbing group',
       lang: 'nl',
-      theme_color: '#222021',
-      background_color: '#222021',
+      theme_color: '#0f172a',
+      background_color: '#0f172a',
       display: 'standalone',
       start_url: '/',
       scope: '/',
