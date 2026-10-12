@@ -4,22 +4,11 @@
 // below with auth.getClaims(), and the admin role is read from app_metadata, which users cannot edit.
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
-const ALLOWED_ORIGINS = ['https://verticale-paniek.github.io', 'http://localhost:3000']
+import { ALLOWED_ORIGINS, corsHeaders, respond } from '../_shared/http.ts'
+
 const BAN_FOREVER = '876000h' // ~100 years; 'none' lifts a ban
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const ADMIN_PROTECTED = 'Admins cannot be disabled or deleted here. Remove the admin role in the database first.'
-
-function corsHeaders(req: Request): Record<string, string> {
-  const origin = req.headers.get('Origin') ?? ''
-  return {
-    'Access-Control-Allow-Origin': ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0],
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    // Let the browser reuse the preflight answer (Chrome caps this at 2 hours) instead of an extra round trip per call.
-    'Access-Control-Max-Age': '7200',
-    'Vary': 'Origin',
-  }
-}
 
 /** Link to our confirm page; the one-time token is exchanged there with verifyOtp. */
 function confirmLink(req: Request, hashedToken: string, type: 'invite' | 'recovery'): string {
@@ -31,13 +20,6 @@ function confirmLink(req: Request, hashedToken: string, type: 'invite' | 'recove
 async function isAdminId(admin: ReturnType<typeof createClient>, id: string): Promise<boolean> {
   const { data } = await admin.auth.admin.getUserById(id)
   return data.user?.app_metadata?.role === 'admin'
-}
-
-function respond(req: Request, status: number, body: unknown): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { ...corsHeaders(req), 'Content-Type': 'application/json' },
-  })
 }
 
 Deno.serve(async (req) => {

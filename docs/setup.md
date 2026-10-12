@@ -11,7 +11,7 @@ One-time actions for the owner: GitHub, your dev machine and the Supabase projec
 5. Repo Settings > Branches: protect `main` (require PR + passing CI). Optional but cheap; do it once the first deploy works.
 6. Decide whether to keep the repo on `main` only or use PRs. For vibe coding with friends, PRs with CI are the safety net before the live site changes.
 
-Decided: org `verticale-paniek`, repo `verticale-paniek.github.io`, so `baseURL` stays `/`.
+Decided: org `verticale-paniek`, repo `verticale-paniek.github.io`, custom domain `https://verticalepaniek.be`, so `baseURL` stays `/`.
 
 ## 2. Dev environment
 
@@ -28,7 +28,7 @@ Node 22 or newer (the repo is developed on v24). Additionally:
 1. supabase.com: sign in with GitHub, create an organization (free) and a project. Pick a region near you (EU). Save the database password in a password manager.
 2. Project Settings > API: copy the **Project URL** and **anon (publishable) key**. These are public and go in the repo config. The **service_role key never goes in the repo**.
 3. Authentication > Providers > Email: enable, **disable "Allow new users to sign up"**, keep "Confirm email" on.
-4. Authentication > URL Configuration: Site URL = the Pages URL; add it (and `http://localhost:3000`) to redirect URLs.
+4. Authentication > URL Configuration: Site URL = `https://verticalepaniek.be`; add it (and `http://localhost:3000`) to redirect URLs. When changing domains, also update `ALLOWED_ORIGINS` in `hub/supabase/functions/_shared/http.ts` and redeploy the Edge Functions.
 5. Nothing to configure for email: invites and password resets are one-time links the admin shares via WhatsApp (see `specs/pwa/overview.md`, Auth).
 6. Create your own user: Authentication > Users > Add user (email + password). Then set yourself admin in the SQL editor:
    `update auth.users set raw_app_meta_data = raw_app_meta_data || '{"role":"admin"}' where email = '<you>';`

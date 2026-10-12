@@ -27,7 +27,7 @@ export default defineNuxtConfig({
   css: ['~/assets/main.css'],
 
   // GitHub Pages cannot rewrite deep links, so routes live after the `#`.
-  // Site is served at the origin root (verticale-paniek.github.io), so baseURL stays `/`.
+  // Site is served at the origin root (verticalepaniek.be), so baseURL stays `/`.
   router: { options: { hashMode: true } },
 
   runtimeConfig: {

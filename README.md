@@ -1,6 +1,6 @@
 # verticale-paniek.github.io
 
-Hub PWA for the Verticale Paniek climbing group, served at https://verticale-paniek.github.io/.
+Hub PWA for the Verticale Paniek climbing group, served at https://verticalepaniek.be/.
 
 - `hub/`: the Nuxt app
 - `docs/`: documentation (`docs/setup.md` for owner setup, `docs/module-guide.md` explains how to add a module; `docs/toplogger/` explains the TopLogger module) and `docs/specs/` for feature designs

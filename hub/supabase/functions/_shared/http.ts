@@ -1,6 +1,6 @@
 import { adminClient } from './supabase.ts'
 
-const ALLOWED_ORIGINS = ['https://verticale-paniek.github.io', 'http://localhost:3000']
+export const ALLOWED_ORIGINS = ['https://verticalepaniek.be', 'https://verticale-paniek.github.io', 'http://localhost:3000']
 
 export function corsHeaders(req: Request): Record<string, string> {
   const origin = req.headers.get('Origin') ?? ''
