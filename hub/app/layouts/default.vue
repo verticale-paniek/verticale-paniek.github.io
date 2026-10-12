@@ -1,6 +1,6 @@
 <template>
-  <div class="flex min-h-dvh flex-col antialiased">
-    <header class="border-b border-outline/50 bg-surface">
+  <div class="flex min-h-dvh flex-col pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] antialiased">
+    <header class="border-b border-outline/50 bg-surface pt-[env(safe-area-inset-top)]">
       <div class="mx-auto flex max-w-4xl items-center gap-3 px-4 py-3 sm:px-8">
         <NuxtLink
           v-if="!isHome && user"
@@ -31,7 +31,7 @@
     <main class="mx-auto w-full max-w-4xl flex-1 px-4 py-8 sm:px-8 sm:py-12">
       <slot />
     </main>
-    <footer class="px-4 pb-6 pt-4 text-center text-xs text-muted">
+    <footer class="px-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-4 text-center text-xs text-muted">
       <BuildVersion />
     </footer>
     <UpdatePrompt />

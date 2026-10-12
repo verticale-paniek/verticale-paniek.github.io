@@ -1,7 +1,7 @@
 <template>
   <div
     v-if="$pwa?.needRefresh"
-    class="fixed inset-x-4 bottom-4 z-50 mx-auto flex max-w-xl flex-wrap items-center gap-3 rounded-2xl border border-outline/50 bg-surface p-4 text-sm shadow-lg"
+    class="fixed left-[calc(1rem+env(safe-area-inset-left))] right-[calc(1rem+env(safe-area-inset-right))] bottom-[calc(1rem+env(safe-area-inset-bottom))] z-50 mx-auto flex max-w-xl flex-wrap items-center gap-3 rounded-2xl border border-outline/50 bg-surface p-4 text-sm shadow-lg"
     role="alert"
   >
     <span class="flex-1">A new version is available.</span>

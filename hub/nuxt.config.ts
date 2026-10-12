@@ -13,6 +13,7 @@ export default defineNuxtConfig({
     head: {
       title: 'Verticale Paniek',
       meta: [
+        { name: 'viewport', content: 'width=device-width, initial-scale=1, viewport-fit=cover' },
         { name: 'theme-color', content: '#0f172a' },
         { name: 'color-scheme', content: 'dark light' },
         { name: 'description', content: 'Hub for the Verticale Paniek climbing group' },
