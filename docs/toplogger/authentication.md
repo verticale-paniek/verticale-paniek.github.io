@@ -137,6 +137,8 @@ TopLogger refresh tokens are single use, so a mistake here loses the connection.
 
 A pg_cron job runs daily at 04:00 (UTC). It calls `toplogger-refresh` through pg_net with `x-cron-secret`, read from Supabase Vault. The function compares it in constant time to `TOPLOGGER_CRON_SECRET` and answers 401 on any mismatch, so users cannot trigger it.
 
+Why a secret at all: Edge Function URLs are public, and this function runs with `verify_jwt = false` because pg_cron has no user session to send a JWT with. Without a check, anyone could trigger renewal runs at will. The secret is a password the scheduler says to the function. It is stored twice because each side needs it: the function holds the expected value (Edge Function secret), and the cron job, which runs inside Postgres, must read the value to send it. Vault is the database's encrypted store for that; the value cannot go in the job's SQL, which lives in the repo and is visible in `cron.job`. Vault being readable in the dashboard is fine, since the owner can see everything anyway; the point is keeping it out of the repo and out of plain SQL. It is lower stakes than the encryption key: a leaked cron secret lets someone trigger renewals but read nothing, while the encryption key together with a database dump would expose tokens.
+
 It renews every connected row whose refresh token expires within 10 days, meaning idle for about 4 days, using the same careful refresh as above (up to 50 per run, 5 at a time). A row that cannot be renewed is simply tried again at the next run, which gives about ten tries before the 14 days run out. It logs only counts. If you use the app regularly this job never has anything to do, because each use already slides the expiry.
 
 ### Disconnect

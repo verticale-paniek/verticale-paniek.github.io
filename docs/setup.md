@@ -13,6 +13,16 @@ One-time actions for the owner: GitHub, your dev machine and the Supabase projec
 
 Decided: org `verticale-paniek`, repo `verticale-paniek.github.io`, custom domain `https://verticalepaniek.be`, so `baseURL` stays `/`.
 
+### Custom domain
+
+The site is served at `https://verticalepaniek.be`. The deploy workflow needs no change for this: with Pages source set to GitHub Actions, the domain is a repo setting, not a `CNAME` file.
+
+1. At your registrar, add DNS records for the apex domain `verticalepaniek.be`: four `A` records (`185.199.108.153`, `185.199.109.153`, `185.199.110.153`, `185.199.111.153`) and optionally four `AAAA` records (`2606:50c0:8000::153`, `2606:50c0:8001::153`, `2606:50c0:8002::153`, `2606:50c0:8003::153`). Check GitHub's "Managing a custom domain for your GitHub Pages site" page in case these addresses changed. For `www`, add a `CNAME` to `verticale-paniek.github.io`.
+2. Repo Settings > Pages > Custom domain: enter `verticalepaniek.be` and save. GitHub checks the DNS, which can take a few minutes up to a day.
+3. Once the check passes, tick **Enforce HTTPS** (the certificate is issued automatically).
+4. Recommended: org Settings > Pages > verify the domain (a `TXT` record), so nobody else can claim it.
+5. Update Supabase (section 3, step 4) and keep `ALLOWED_ORIGINS` in `hub/supabase/functions/_shared/http.ts` in sync. The old `github.io` URL redirects to the custom domain, but the installed PWA is tied to its origin: phones that installed from the old URL must reinstall from the new one (and log in again), so switch before inviting people.
+
 ## 2. Dev environment
 
 Node 22 or newer (the repo is developed on v24). Additionally:

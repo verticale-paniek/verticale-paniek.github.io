@@ -25,7 +25,7 @@ CI (`.github/workflows/ci.yml` on PRs, `deploy.yml` on push to `main`) runs type
 
 ## Architecture
 
-- **Nuxt 4 SPA** (`ssr: false`, `nuxt generate`), source under `hub/app/`. Served at the origin root (`https://verticale-paniek.github.io/`), so `baseURL` stays `/`.
+- **Nuxt 4 SPA** (`ssr: false`, `nuxt generate`), source under `hub/app/`. Served at the origin root of the custom domain `https://verticalepaniek.be/` (the old `https://verticale-paniek.github.io/` redirects to it; the domain is a repo Pages setting, see `docs/setup.md`), so `baseURL` stays `/`.
 - **Hash routing** (`router.options.hashMode`) because Pages cannot serve deep links. Auth links must use the `token_hash` + `verifyOtp` pattern (`/#/auth/confirm?...`), not Supabase's default hash-token links.
 - **PWA**: `@vite-pwa/nuxt`, `registerType: 'prompt'`. `UpdatePrompt.vue` shows the update banner when a new service worker is waiting; hourly update checks. Source maps are intentionally on in production (debugging from phone devtools). `BuildVersion.vue` shows `GITHUB_SHA` (short) and build time from `runtimeConfig.public`.
 - **Module registry**: `hub/app/shell/modules.ts` globs `hub/app/modules/*/manifest.ts` (excluding `_template`), `buildRegistry` validates it (id == folder name, no duplicates), and `hub/app/plugins/modules.ts` adds each module's routes to the router under `/<id>/...`. The launcher (`hub/app/pages/index.vue`) lists registered modules. Adding a module needs no shell edits.
