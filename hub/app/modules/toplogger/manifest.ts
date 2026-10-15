@@ -7,6 +7,7 @@ export default {
   icon: '🧗',
   routes: [
     { path: '', component: () => import('./pages/Index.vue') },
+    { path: 'route', component: () => import('./pages/Route.vue') },
     { path: 'account', component: () => import('./pages/Account.vue') },
   ],
 } satisfies ModuleManifest

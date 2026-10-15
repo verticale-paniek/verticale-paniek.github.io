@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { Gym, Route } from './utils/domain'
+import type { ClimbUser, Community, Gym, Route, RouteLog } from './utils/domain'
 
 export interface ConnectionState {
   connected: boolean
@@ -17,6 +17,24 @@ export interface Profile {
   gymUserFavorites: { gym: Gym }[]
 }
 
+/** Route screen payload. `logs` and `community` are null when TopLogger could not provide them. */
+export interface RouteDetail {
+  route: Route
+  logs: RouteLog[] | null
+  community: Community | null
+}
+
+/** Result of a log, unsend or delete: the route's new progress and (if available) its refreshed logs. */
+export interface WriteResult {
+  climbUser: ClimbUser | null
+  logs: RouteLog[] | null
+}
+
+export interface VoteResult {
+  climbUser: ClimbUser
+  stats: Pick<Community, 'gradeVoteStats' | 'ratingVoteStats'> | null
+}
+
 /** Home screen payload: the profile, the gym the server chose, and that gym's routes. */
 export interface Home {
   profile: Profile
@@ -30,6 +48,11 @@ export type TopLoggerRequest
     | { action: 'disconnect' }
     | { action: 'profile' }
     | { action: 'routes', gymId?: string }
+    | { action: 'routeDetail', gymId: string, routeId: string }
+    | { action: 'logAscent', gymId: string, routeId: string, tickType: 0 | 1 | 2 | 3, climbedAtDate: string }
+    | { action: 'unsend', gymId: string, routeId: string }
+    | { action: 'deleteLog', gymId: string, routeId: string, logId: string }
+    | { action: 'vote', gymId: string, routeId: string, grade: number }
 
 /** Error from the toplogger function; `code` is e.g. not_connected, reconnect_required, invalid_token. */
 export class TopLoggerApiError extends Error {

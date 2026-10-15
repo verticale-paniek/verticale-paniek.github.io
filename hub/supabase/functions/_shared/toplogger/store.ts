@@ -225,7 +225,10 @@ export async function renewConnection(userId: string): Promise<'renewed' | 'skip
   return 'renewed'
 }
 
-/** Runs a read-only call, with one coordinated refresh and retry if TopLogger rejects the access token. */
+/**
+ * Runs a call with one coordinated refresh and retry if TopLogger rejects the access token. Safe for writes too:
+ * an UNAUTHENTICATED rejection means the request was not executed, so the retry cannot double-apply it.
+ */
 export async function readWithAccess<T>(userId: string, call: (token: string) => Promise<T>): Promise<T> {
   const token = await accessToken(userId)
   try {

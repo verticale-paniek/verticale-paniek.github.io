@@ -4,7 +4,8 @@
 // Deployed with verify_jwt = false (see supabase/config.toml): the JWT is verified with getClaims below.
 import { callerId, corsHeaders, respond, throttle } from '../_shared/http.ts'
 import { exchangeRefreshToken, graphql, TopLoggerError, USER } from '../_shared/toplogger/graphql.ts'
-import { type Call, fetchHome, type Profile } from '../_shared/toplogger/ops.ts'
+import { deleteLog, fetchRouteDetail, fetchRouteLogs, fetchVoteStats, logAscent, optional, unsend, voteGrade } from '../_shared/toplogger/climb.ts'
+import { type Call, fetchHome, fetchProfile, type Profile } from '../_shared/toplogger/ops.ts'
 import {
   ConnectionError,
   connectionStatus,
@@ -26,6 +27,31 @@ const profiles = new Map<string, { profile: Profile, until: number }>()
 function cachedProfile(userId: string): Profile | undefined {
   const hit = profiles.get(userId)
   return hit && hit.until > Date.now() ? hit.profile : undefined
+}
+
+/** The caller's TopLogger profile (cached briefly). Always looked up here, never taken from the request. */
+async function profileOf(userId: string, call: Call): Promise<Profile> {
+  const profile = cachedProfile(userId) ?? await fetchProfile(call)
+  profiles.set(userId, { profile, until: Date.now() + 600_000 })
+  return profile
+}
+
+const text = (value: unknown) => typeof value === 'string' ? value : ''
+
+const writing = new Set<string>()
+
+/** Runs one TopLogger write at a time per user (per instance), refusing an overlapping one. */
+async function exclusive<T>(userId: string, work: () => Promise<T>): Promise<T> {
+  if (writing.has(userId)) {
+    throw new ConnectionError('busy', 'Another change is still being saved. Try again in a moment.')
+  }
+  writing.add(userId)
+  try {
+    return await work()
+  }
+  finally {
+    writing.delete(userId)
+  }
 }
 
 function fail(req: Request, error: unknown): Response {
@@ -60,7 +86,7 @@ Deno.serve(async (req) => {
     return respond(req, 429, { error: 'Too many requests', code: 'rate_limited' })
   }
 
-  let body: { action?: string, refreshToken?: unknown, gymId?: unknown }
+  let body: { action?: string, refreshToken?: unknown, gymId?: unknown, routeId?: unknown, tickType?: unknown, climbedAtDate?: unknown, logId?: unknown, grade?: unknown }
   try {
     body = await req.json()
   }
@@ -116,6 +142,36 @@ Deno.serve(async (req) => {
         const home = await fetchHome(call, body.gymId, cachedProfile(userId))
         profiles.set(userId, { profile: home.profile, until: Date.now() + 600_000 })
         return respond(req, 200, home)
+      }
+
+      case 'routeDetail': {
+        const call = callerFor(userId)
+        const me = await profileOf(userId, call)
+        return respond(req, 200, await fetchRouteDetail(call, text(body.gymId), me.id, text(body.routeId)))
+      }
+
+      case 'logAscent':
+      case 'unsend':
+      case 'deleteLog': {
+        const action = body.action
+        const call = callerFor(userId)
+        const me = await profileOf(userId, call)
+        const [gymId, routeId] = [text(body.gymId), text(body.routeId)]
+        // One write at a time per user, so a double tap cannot log twice.
+        const climbUser = await exclusive(userId, () => action === 'logAscent'
+          ? logAscent(call, gymId, me.id, routeId, body.tickType, body.climbedAtDate)
+          : action === 'unsend'
+            ? unsend(call, gymId, me.id, routeId)
+            : deleteLog(call, gymId, me.id, routeId, body.logId))
+        return respond(req, 200, { climbUser, logs: await optional(fetchRouteLogs(call, gymId, me.id, routeId)) })
+      }
+
+      case 'vote': {
+        const call = callerFor(userId)
+        const me = await profileOf(userId, call)
+        const [gymId, routeId] = [text(body.gymId), text(body.routeId)]
+        const climbUser = await exclusive(userId, () => voteGrade(call, gymId, me.id, routeId, body.grade))
+        return respond(req, 200, { climbUser, stats: await optional(fetchVoteStats(call, gymId, routeId)) })
       }
 
       default:

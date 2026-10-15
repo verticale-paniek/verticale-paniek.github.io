@@ -1,5 +1,5 @@
 <template>
-  <section>
+  <section class="pb-20">
     <TlTabs />
 
     <div class="flex items-center gap-2">
@@ -181,7 +181,7 @@
                 class="size-4.5 accent-accent"
                 type="checkbox"
                 :value="value"
-                @change="wallsChanged = true"
+                @change="filters.wallsChosen = true"
               >
               {{ value }}
             </label>
@@ -189,7 +189,7 @@
         </fieldset>
         <button
           class="col-span-2 min-h-11 text-left text-accent"
-          @click="resetFilters"
+          @click="resetAll"
         >
           Reset filters
         </button>
@@ -229,15 +229,9 @@ import TlTabs from '../components/TlTabs.vue'
 import { useTopLogger } from '../useTopLogger'
 import { defaultWallSelection, frenchGrade } from '../utils/domain'
 
-const { state, gyms, activeRoutes, load, refresh, selectGym } = useTopLogger()
+const { state, filters, gyms, activeRoutes, load, refresh, selectGym, resetFilters } = useTopLogger()
 
-const search = ref('')
-const showFilters = ref(false)
-const grade = ref('')
-const color = ref('')
-const status = ref('')
-const selectedWalls = ref<string[]>([])
-const wallsChanged = ref(false)
+const { search, showFilters, grade, color, status, walls: selectedWalls } = toRefs(filters)
 
 const sorted = computed(() => [...activeRoutes.value].sort((a, b) =>
   a.grade - b.grade
@@ -278,26 +272,21 @@ const synced = computed(() => state.syncedAt
   ? new Date(state.syncedAt).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
   : '')
 
-// Changing gym restores that gym's default wall selection (Klimax: sectors 1 to 7).
-watch(() => state.gymId, () => {
-  grade.value = color.value = status.value = search.value = ''
-  selectedWalls.value = []
-  wallsChanged.value = false
-})
+// The gym's default walls (Klimax: sectors 1 to 7) apply until the climber chooses walls themselves.
 watch([() => state.gymId, walls], () => {
-  if (!wallsChanged.value) {
+  if (!filters.wallsChosen) {
     selectedWalls.value = defaultWallSelection(gyms.value.find(g => g.id === state.gymId)?.name || '', walls.value)
   }
-})
+}, { immediate: true })
 
-function allWalls() {
-  wallsChanged.value = true
-  selectedWalls.value = []
+function resetAll() {
+  resetFilters()
+  allWalls()
 }
 
-function resetFilters() {
-  grade.value = color.value = status.value = search.value = ''
-  allWalls()
+function allWalls() {
+  filters.wallsChosen = true
+  selectedWalls.value = []
 }
 
 onMounted(load)

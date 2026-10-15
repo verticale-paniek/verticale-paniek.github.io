@@ -1,5 +1,5 @@
 <template>
-  <section>
+  <section class="pb-20">
     <TlTabs />
     <h1 class="mb-6 text-2xl font-semibold tracking-tight sm:text-3xl">
       TopLogger account
