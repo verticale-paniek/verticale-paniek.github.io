@@ -92,7 +92,8 @@ export function useTopLogger() {
     const all = [...(p?.gym ? [p.gym] : []), ...(p?.gymUserFavorites ?? []).map(f => f.gym)]
     return [...new Map(all.map(g => [g.id, g])).values()]
   })
-  const activeRoutes = computed(() => state.routes.filter(r => isActive(r)))
+  // Deduped by id as well: list keys must be unique, and older cached snapshots may hold duplicates.
+  const activeRoutes = computed(() => [...new Map(state.routes.filter(r => isActive(r)).map(r => [r.id, r])).values()])
 
   /** Shows the cached snapshot for this account at once, then refreshes. Safe to call on every page mount. */
   async function load(): Promise<void> {

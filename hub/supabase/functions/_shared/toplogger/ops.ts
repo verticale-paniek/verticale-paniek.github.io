@@ -56,7 +56,8 @@ export async function fetchRoutes(call: Call, gymId: unknown, userId: string): P
   if (routes.some(r => !r || typeof r.id !== 'string' || !Number.isFinite(r.grade))) {
     throw new TopLoggerError('api', 'TopLogger returned incomplete route data.')
   }
-  return routes
+  // Pages have no stable sort order, so a route can appear on two pages: keep each id once.
+  return [...new Map(routes.map(r => [r.id, r])).values()]
 }
 
 export interface Gym {

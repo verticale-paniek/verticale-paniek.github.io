@@ -56,6 +56,14 @@ describe('fetchRoutes', () => {
     expect(vars).toMatchObject({ gymId: '42', userId: 'tl-user' })
   })
 
+  it('keeps a route once when it appears on two pages', async () => {
+    const call = (async (_q: string, v: Record<string, unknown>) => {
+      const n = (v.pagination as { page: number }).page
+      return { climbs: page(n === 1 ? [route, { id: 'r2', grade: 610 }] : [{ id: 'r2', grade: 610 }, { id: 'r3', grade: 620 }], n, 4, 2) }
+    }) as Call
+    expect((await fetchRoutes(call, '1', 'u')).map(r => r.id)).toEqual(['r1', 'r2', 'r3'])
+  })
+
   it('rejects malformed gym ids without calling TopLogger', async () => {
     const call = (async () => {
       throw new Error('should not be called')
