@@ -1,7 +1,10 @@
 // The TopLogger GraphQL operations this app is allowed to send. Callers pick an action; they never supply
 // query text. Field lists were ported from the original Android app (verified against the live schema there).
-export const ROUTE_FIELDS = `id grade name label inAt outAt outPlannedAt setterName leadEnabled leadRequired
-  climbSetters { gymAdmin { name } } wall { nameLoc } holdColor { color nameLoc }
+/** A route as TopLogger describes it, without this user's progress on it. */
+export const ROUTE_CORE = `id grade name label inAt outAt outPlannedAt setterName leadEnabled leadRequired
+  climbSetters { gymAdmin { name } } wall { nameLoc } holdColor { color nameLoc }`
+
+export const ROUTE_FIELDS = `${ROUTE_CORE}
   climbUser(userId: $userId) { grade tickType totalTries totalTicks triedFirstAtDate tickedFirstAtDate }`
 
 export const ROUTES = `query PlusRoutes($gymId: ID!, $userId: ID!, $pagination: PaginationInputClimbs) {
@@ -45,5 +48,18 @@ export const COMMUNITY = `query PlusCommunity($gymId: ID!, $id: ID!) {
 export const TOPPERS = `query PlusToppers($gymId: ID!, $climbId: ID!, $pagination: PaginationInputClimbUsers) {
   climbUsers(gymId: $gymId, climbId: $climbId, pagination: $pagination) {
     pagination { total page perPage } data { id user { id fullName } tickType grade }
+  }
+}`
+
+/**
+ * Everything the Top 10 needs in one call: the climber's session days at a gym, and for each day the routes
+ * climbed with the tick type achieved that day, with the route's own details nested (so routes that have left the
+ * wall need no lookup). The gym id is placed in the text, so callers must pass it through validId first.
+ * Verified against live data on 2026-10-15: tick types match the per-day logs, and the nested limit does not truncate.
+ */
+export const historyQuery = (gymId: string) => `query PlusHistory($userId: ID!, $from: DateTime!, $until: DateTime!, $pagination: PaginationInputClimbDays) {
+  climbDaysPaginated(userId: $userId, gymId: "${gymId}", totalTriesMin: 1, routesTotalTriesMin: 1, statsAtDateMin: $from, statsAtDateMax: $until, pagination: $pagination) {
+    pagination { total page perPage }
+    data { id gymId statsAtDate climbUserDays(climbType: "route", limit: 1000) { id tickType climb { ${ROUTE_CORE} climbType gymId } } }
   }
 }`

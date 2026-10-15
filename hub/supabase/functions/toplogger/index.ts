@@ -5,6 +5,7 @@
 import { callerId, corsHeaders, respond, throttle } from '../_shared/http.ts'
 import { exchangeRefreshToken, graphql, TopLoggerError, USER } from '../_shared/toplogger/graphql.ts'
 import { deleteLog, fetchRouteDetail, fetchRouteLogs, fetchVoteStats, logAscent, optional, unsend, voteGrade } from '../_shared/toplogger/climb.ts'
+import { fetchHistory } from '../_shared/toplogger/history.ts'
 import { type Call, fetchHome, fetchProfile, type Profile } from '../_shared/toplogger/ops.ts'
 import {
   ConnectionError,
@@ -148,6 +149,12 @@ Deno.serve(async (req) => {
         const call = callerFor(userId)
         const me = await profileOf(userId, call)
         return respond(req, 200, await fetchRouteDetail(call, text(body.gymId), me.id, text(body.routeId)))
+      }
+
+      case 'history': {
+        const call = callerFor(userId)
+        const me = await profileOf(userId, call)
+        return respond(req, 200, await fetchHistory(call, text(body.gymId), me.id))
       }
 
       case 'logAscent':

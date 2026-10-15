@@ -29,6 +29,7 @@ const route = useRoute()
 // A route's own screen counts as part of the Routes tab.
 const tabs = [
   { to: '/toplogger', title: 'Routes', icon: 'lucide:layout-grid', paths: ['/toplogger', '/toplogger/route'] },
+  { to: '/toplogger/top', title: 'Top 10', icon: 'lucide:trophy', paths: ['/toplogger/top'] },
   { to: '/toplogger/account', title: 'Account', icon: 'lucide:user-round', paths: ['/toplogger/account'] },
 ]
 

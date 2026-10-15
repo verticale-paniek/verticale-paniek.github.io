@@ -4,10 +4,11 @@
 import { computed, reactive } from 'vue'
 import {
   toploggerCall, TopLoggerApiError,
-  type Home, type Profile, type RouteDetail, type VoteResult, type WriteResult,
+  type HistoryResult, type Home, type Profile, type RouteDetail, type VoteResult, type WriteResult,
 } from './api'
 import { cacheKey, clearCache, readCache, writeCache } from './utils/cache'
-import { dayLabel, isActive, visibleLogs, type ClimbUser, type Community, type Route, type RouteLog } from './utils/domain'
+import { dayLabel, isActive, topTen, visibleLogs, type Ascent, type ClimbUser, type Community, type Route, type RouteLog } from './utils/domain'
+import { canRank, validAscents } from './utils/history'
 
 interface RouteSnapshot { gymId: string, routes: Route[] }
 
@@ -38,6 +39,22 @@ const filters = reactive({
   wallsChosen: false,
 })
 
+/** Top 10: the ascent history for the selected gym, plus routes that left the wall (needed to score old ascents). */
+const top = reactive({
+  days: 60 as number,
+  history: [] as Ascent[],
+  archived: [] as Route[],
+  /** True once history exists (cached or fetched), so a ranking can be shown. */
+  loaded: false,
+  busy: false,
+  error: '',
+  at: '',
+  /** True once history was fetched during this visit to the module; cleared on leaving it and by writes. */
+  fresh: false,
+})
+
+const DAY_CHOICES = [60, 120, 180]
+
 const detail = reactive({
   routeId: '',
   route: null as Route | null,
@@ -56,6 +73,7 @@ const detail = reactive({
 
 let request = 0
 let detailRequest = 0
+let historyRequest = 0
 
 function save(kind: string, scope: string, data: unknown): string {
   const at = writeCache(cacheKey(state.account, scope, kind), data)
@@ -78,6 +96,36 @@ function loadCached(account: string): void {
     state.routes = routes.data.routes
     state.syncedAt = routes.at
   }
+  const days = readCache<number>(cacheKey(account, '_', 'days'))?.data
+  top.days = DAY_CHOICES.includes(days as number) ? days as number : 60
+  loadCachedTop()
+}
+
+/** Shows the saved history for the selected gym, if any. */
+function loadCachedTop(): void {
+  Object.assign(top, { history: [], archived: [], loaded: false, busy: false, error: '', at: '', fresh: false })
+  if (!state.gymId) {
+    return
+  }
+  const history = readCache<Ascent[]>(cacheKey(state.account, state.gymId, 'history'))
+  const archived = readCache<Route[]>(cacheKey(state.account, state.gymId, 'archived'))
+  const logs = validAscents(history?.data, state.gymId)
+  if (history && logs && archived && Array.isArray(archived.data)) {
+    top.history = logs
+    top.archived = archived.data
+    top.loaded = true
+    top.at = history.at
+  }
+}
+
+/** Every route we can score with: the ones on the wall now plus those that have left it. */
+function scoringRoutes(): Route[] {
+  return [...new Map([...top.archived, ...state.routes].map(r => [r.id, r])).values()]
+}
+
+/** After a write the history may be wrong: refetch on the next visit to the Top 10. */
+function staleHistory(): void {
+  top.fresh = false
 }
 
 function resetFilters(): void {
@@ -156,6 +204,7 @@ export function useTopLogger() {
     useRouter().afterEach((to) => {
       if (to.path !== '/toplogger' && !to.path.startsWith('/toplogger/')) {
         state.entered = false
+        top.fresh = false
       }
     })
   }
@@ -178,12 +227,47 @@ export function useTopLogger() {
       return
     }
     state.entered = true
+    const startGym = state.gymId
+    const prefs = readPrefs()
+    if (!state.gymId) {
+      // New device: take the saved gym before the first fetch so we do not load the wrong one first.
+      state.gymId = (await prefs)?.gym_id ?? ''
+    }
     if (!state.busy) {
       await refresh(supabase)
     }
+    // Another device may have picked a different gym; follow it unless the climber changed gym meanwhile.
+    const saved = await prefs
+    if (saved?.gym_id && saved.gym_id !== state.gymId && state.gymId === (startGym || state.gymId) && gyms.value.some(g => g.id === saved.gym_id)) {
+      await selectGym(saved.gym_id, false)
+    }
   }
 
-  async function selectGym(gymId: string): Promise<void> {
+  /** The climber's saved preferences. Failures (offline, table missing) just mean "use what this device remembers". */
+  async function readPrefs(): Promise<{ gym_id: string | null, top_days: number | null } | null> {
+    try {
+      const { data } = await supabase.from('toplogger_prefs').select('gym_id, top_days').maybeSingle()
+      if (data?.top_days && DAY_CHOICES.includes(data.top_days)) {
+        top.days = data.top_days
+        save('days', '_', data.top_days)
+      }
+      return data
+    }
+    catch {
+      return null
+    }
+  }
+
+  function savePrefs(patch: { gym_id?: string, top_days?: number }): void {
+    const id = user.value?.id
+    if (!id) {
+      return
+    }
+    // Best effort: this device keeps its own copy, so a failed save is not worth interrupting the climber for.
+    void Promise.resolve(supabase.from('toplogger_prefs').upsert({ user_id: id, ...patch, updated_at: new Date().toISOString() }, { onConflict: 'user_id' })).catch(() => {})
+  }
+
+  async function selectGym(gymId: string, persist = true): Promise<void> {
     if (gymId === state.gymId || !gyms.value.some(g => g.id === gymId)) {
       return
     }
@@ -193,6 +277,11 @@ export function useTopLogger() {
     state.syncedAt = ''
     resetFilters()
     save('gym', '_', gymId)
+    if (persist) {
+      savePrefs({ gym_id: gymId })
+    }
+    historyRequest++
+    loadCachedTop()
     const cached = readCache<RouteSnapshot>(cacheKey(state.account, gymId, 'routes'))
     if (cached) {
       state.routes = cached.data.routes
@@ -205,10 +294,72 @@ export function useTopLogger() {
   function reset(): void {
     request++
     detailRequest++
+    historyRequest++
     clearCache(state.account)
     loadCached(state.account)
     state.busy = false
     resetFilters() // loadCached cleared `entered`, so the next visit to the list refetches
+  }
+
+  // ---- Top 10 -----------------------------------------------------------------------------------------------
+
+  /** One call: every topped route per session day in the window, plus the routes behind them. */
+  async function loadHistory(): Promise<void> {
+    if (!state.gymId || top.busy || state.needsConnect) {
+      return
+    }
+    const id = ++historyRequest
+    const gymId = state.gymId
+    top.busy = true
+    top.error = ''
+    try {
+      const result = await toploggerCall<HistoryResult>(supabase, { action: 'history', gymId })
+      if (id !== historyRequest || gymId !== state.gymId) {
+        return
+      }
+      top.archived = result.routes
+      top.history = result.logs
+      top.at = save('history', gymId, result.logs)
+      save('archived', gymId, result.routes)
+      top.loaded = true
+      top.fresh = true
+    }
+    catch (e) {
+      if (id === historyRequest) {
+        const message = describe(e)
+        if (!state.needsConnect) {
+          top.error = message
+        }
+      }
+    }
+    finally {
+      if (id === historyRequest) {
+        top.busy = false
+      }
+    }
+  }
+
+  /** Opening the Top 10: the list and the history load together (in parallel when we already know the gym). */
+  async function enterTop(): Promise<void> {
+    await Promise.all([load(), top.fresh ? undefined : loadHistory()])
+    // A first visit on a new device only learns the gym during load(), so history may still be missing.
+    if (!top.fresh && !top.busy && !top.error && !state.needsConnect) {
+      await loadHistory()
+    }
+  }
+
+  /** The refresh button on the Top 10: routes and history. */
+  async function refreshTop(): Promise<void> {
+    await Promise.all([refresh(supabase), loadHistory()])
+  }
+
+  function setDays(days: number): void {
+    if (!DAY_CHOICES.includes(days) || days === top.days) {
+      return
+    }
+    top.days = days
+    save('days', '_', days)
+    savePrefs({ top_days: days })
   }
 
   // ---- Route screen ----------------------------------------------------------------------------------------
@@ -295,6 +446,7 @@ export function useTopLogger() {
       detail.logsFailed = true
     }
     detail.lastWrite = { kind, routeId, before, after: result.climbUser }
+    staleHistory()
   }
 
   /** Try (0), redpoint (1), flash (2) or onsight (3). Repeats are redpoints on an already topped route. */
@@ -360,9 +512,17 @@ export function useTopLogger() {
       })
   }
 
+  /** Ranking is only shown when every ascent that could count has a known route; otherwise it would silently be partial. */
+  const ranked = computed(() => {
+    const routes = scoringRoutes()
+    return top.loaded && canRank(top.history, routes, state.gymId) ? topTen(routes, top.history, state.gymId, top.days) : []
+  })
+  const rankable = computed(() => top.loaded && canRank(top.history, scoringRoutes(), state.gymId))
+
   return {
-    state, filters, detail, gyms, activeRoutes,
+    state, filters, detail, top, gyms, activeRoutes, ranked, rankable,
     load, refresh: () => refresh(supabase), selectGym, reset, resetFilters,
+    enterTop, refreshTop, setDays,
     openRoute, submitAscent, unsend, deleteLog, voteGrade,
   }
 }

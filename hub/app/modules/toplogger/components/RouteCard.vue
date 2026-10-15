@@ -6,6 +6,10 @@
       :class="done ? 'border-emerald-500/60' : 'border-outline/50'"
     >
       <span
+        v-if="rank"
+        class="w-5 shrink-0 text-xs tabular-nums text-muted"
+      >{{ String(rank).padStart(2, '0') }}</span>
+      <span
         class="size-3 shrink-0 rounded-full border border-outline"
         :style="{ background: colorValue(route.holdColor?.color) }"
         aria-hidden="true"
@@ -16,9 +20,13 @@
         <span class="break-words text-xs text-muted">
           {{ route.wall?.nameLoc || 'Wall unknown' }} · {{ route.holdColor?.nameLoc || 'Color unknown' }}<template v-if="route.climbUser?.totalTries"> · {{ route.climbUser.totalTries }} {{ route.climbUser.totalTries === 1 ? 'attempt' : 'attempts' }}</template>
         </span>
+        <span
+          v-if="ranked"
+          class="text-xs text-muted"
+        >{{ days ? `${daysLeftLabel(daysLeft(ranked.ascent.climbedAtDate, days))} · ` : '' }}{{ ranked.score }} points</span>
       </span>
       <span
-        v-if="tops > 1"
+        v-if="tops > 1 && !ranked"
         class="shrink-0 text-xs tabular-nums text-muted"
       ><span aria-hidden="true">×{{ tops }}</span><span class="sr-only">{{ tops }} ascents</span></span>
       <span
@@ -42,10 +50,11 @@
 </template>
 
 <script setup lang="ts">
-import { ascentLabel, colorValue, frenchGrade, topCount, type Route } from '../utils/domain'
+import { ascentLabel, colorValue, daysLeft, daysLeftLabel, frenchGrade, topCount, type RankedRoute, type Route } from '../utils/domain'
 
-const props = defineProps<{ route: Route }>()
-const tickType = computed(() => props.route.climbUser?.tickType ?? 0)
+/** In the Top 10, `ranked` shows the ascent that earned the place instead of the route's current best. */
+const props = defineProps<{ route: Route, rank?: number, ranked?: RankedRoute, days?: number }>()
+const tickType = computed(() => props.ranked?.ascent.tickType ?? props.route.climbUser?.tickType ?? 0)
 const done = computed(() => tickType.value > 0)
 const attempted = computed(() => !done.value && !!props.route.climbUser?.totalTries)
 const tops = computed(() => topCount(props.route.climbUser))

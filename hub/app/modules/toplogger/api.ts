@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { ClimbUser, Community, Gym, Route, RouteLog } from './utils/domain'
+import type { Ascent, ClimbUser, Community, Gym, Route, RouteLog } from './utils/domain'
 
 export interface ConnectionState {
   connected: boolean
@@ -35,6 +35,12 @@ export interface VoteResult {
   stats: Pick<Community, 'gradeVoteStats' | 'ratingVoteStats'> | null
 }
 
+/** Top 10 history: one entry per topped route per session day, and the routes behind them (including removed ones). */
+export interface HistoryResult {
+  logs: Ascent[]
+  routes: Route[]
+}
+
 /** Home screen payload: the profile, the gym the server chose, and that gym's routes. */
 export interface Home {
   profile: Profile
@@ -48,6 +54,7 @@ export type TopLoggerRequest
     | { action: 'disconnect' }
     | { action: 'profile' }
     | { action: 'routes', gymId?: string }
+    | { action: 'history', gymId: string }
     | { action: 'routeDetail', gymId: string, routeId: string }
     | { action: 'logAscent', gymId: string, routeId: string, tickType: 0 | 1 | 2 | 3, climbedAtDate: string }
     | { action: 'unsend', gymId: string, routeId: string }
