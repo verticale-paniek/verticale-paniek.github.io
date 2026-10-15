@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Gym, Route } from './utils/domain'
 
 export interface ConnectionState {
   connected: boolean
@@ -12,8 +13,15 @@ export interface ConnectionState {
 export interface Profile {
   id: string
   fullName: string
-  gym: { id: string, name: string } | null
-  gymUserFavorites: { gym: { id: string, name: string } }[]
+  gym: Gym | null
+  gymUserFavorites: { gym: Gym }[]
+}
+
+/** Home screen payload: the profile, the gym the server chose, and that gym's routes. */
+export interface Home {
+  profile: Profile
+  gymId: string
+  routes: Route[]
 }
 
 export type TopLoggerRequest
@@ -21,6 +29,7 @@ export type TopLoggerRequest
     | { action: 'connect', refreshToken: string }
     | { action: 'disconnect' }
     | { action: 'profile' }
+    | { action: 'routes', gymId?: string }
 
 /** Error from the toplogger function; `code` is e.g. not_connected, reconnect_required, invalid_token. */
 export class TopLoggerApiError extends Error {

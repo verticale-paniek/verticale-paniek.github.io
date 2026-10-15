@@ -4,6 +4,7 @@
 // Deployed with verify_jwt = false (see supabase/config.toml): the JWT is verified with getClaims below.
 import { callerId, corsHeaders, respond, throttle } from '../_shared/http.ts'
 import { exchangeRefreshToken, graphql, TopLoggerError, USER } from '../_shared/toplogger/graphql.ts'
+import { type Call, fetchHome, type Profile } from '../_shared/toplogger/ops.ts'
 import {
   ConnectionError,
   connectionStatus,
@@ -13,6 +14,19 @@ import {
 } from '../_shared/toplogger/store.ts'
 
 const JWT_SHAPE = /^[\w-]+\.[\w-]+\.[\w-]+$/
+
+/** A TopLogger caller for one user: refreshes and retries on an expired access token (see readWithAccess). */
+function callerFor(userId: string): Call {
+  return (query, variables = {}) => readWithAccess(userId, token => graphql(query, variables, token))
+}
+
+// Per instance, short-lived: the user may reconnect a different TopLogger account (other instances catch up on expiry).
+const profiles = new Map<string, { profile: Profile, until: number }>()
+
+function cachedProfile(userId: string): Profile | undefined {
+  const hit = profiles.get(userId)
+  return hit && hit.until > Date.now() ? hit.profile : undefined
+}
 
 function fail(req: Request, error: unknown): Response {
   if (error instanceof ConnectionError) {
@@ -46,7 +60,7 @@ Deno.serve(async (req) => {
     return respond(req, 429, { error: 'Too many requests', code: 'rate_limited' })
   }
 
-  let body: { action?: string, refreshToken?: unknown }
+  let body: { action?: string, refreshToken?: unknown, gymId?: unknown }
   try {
     body = await req.json()
   }
@@ -83,16 +97,25 @@ Deno.serve(async (req) => {
           throw error
         }
         await saveConnection(userId, tokens)
+        profiles.delete(userId)
         return respond(req, 200, { connected: true, refreshExpiresAt: tokens.refresh.expiresAt })
       }
 
       case 'disconnect':
         await deleteConnection(userId)
+        profiles.delete(userId)
         return respond(req, 200, { connected: false })
 
       case 'profile': {
         const data = await readWithAccess(userId, token => graphql<{ userMe: unknown }>(USER, {}, token))
         return respond(req, 200, data.userMe)
+      }
+
+      case 'routes': {
+        const call = callerFor(userId)
+        const home = await fetchHome(call, body.gymId, cachedProfile(userId))
+        profiles.set(userId, { profile: home.profile, until: Date.now() + 600_000 })
+        return respond(req, 200, home)
       }
 
       default:
