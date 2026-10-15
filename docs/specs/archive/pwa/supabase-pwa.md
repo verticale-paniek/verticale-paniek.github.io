@@ -1,6 +1,6 @@
 # Invite-only TopLogger PWA
 
-Status: the connection part is implemented; see `../../toplogger/authentication.md` for what exists and how it works. This file is the design and requirements.
+Status: archived 2026-10-15. The module is built and verified; see `../../../toplogger/authentication.md` (the connection) and `../../../toplogger/data.md` (the screens, API and the Latency and Security guidance moved there) for what exists. Not built from this design: the pairing-secret protocol and the Android/Windows connector apps (connecting is a manual token paste). This file is kept for the design rationale.
 
 ## Goal
 

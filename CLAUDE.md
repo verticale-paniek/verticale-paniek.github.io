@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Verticale Paniek is a closed-group, Android-only installable PWA: a **hub** that hosts independent **modules** (TopLogger Plus, fitness, training, games...). `docs/` holds documentation of what exists (`setup.md` for owner setup, `module-guide.md` for authoring modules, `toplogger/` for the TopLogger module) and `docs/specs/` holds feature design and sparring that is not (fully) built: `specs/pwa/` (`overview.md` first, `supabase-pwa.md` for the TopLogger design) and `specs/refresh-ux/`. Finished specs move to `docs/specs/archive/`.
+Verticale Paniek is a closed-group, Android-only installable PWA: a **hub** that hosts independent **modules** (TopLogger Plus, fitness, training, games...). `docs/` holds documentation of what exists (`setup.md` for owner setup, `auth.md` for sign-in and the admin, `module-guide.md` for authoring modules, `toplogger/` for the TopLogger module: `authentication.md` for the connection, `data.md` for the screens and API) and `docs/specs/` holds feature design and sparring that is not (fully) built: `specs/refresh-ux/` and `specs/achievements/` (hub-level XP and achievements; the TopLogger Adventure port is part of it). Finished specs move to `docs/specs/archive/` (the original hub and TopLogger design is there as `archive/pwa/`).
 
-Status: phase 1 (foundation) is deployed. Phase 2 (Supabase auth, invites, admin page, RLS example) is written but not yet verified against the hosted project. The TopLogger module has its connection layer built (see below); its data screens are not.
+Status: phases 1 (foundation) and 2 (Supabase auth, invites, admin page, RLS, keepalive) are deployed and verified. The TopLogger module is built: connection, routes, route detail with logging, and the Top 10. Adventure/achievements are specified (`docs/specs/achievements/`) but not built.
 
 ## Commands
 
@@ -40,14 +40,14 @@ CI (`.github/workflows/ci.yml` on PRs, `deploy.yml` on push to `main`) runs type
 
 ## TopLogger module constraints
 
-Built so far: connect, status, profile and token refresh (on use, plus a daily `toplogger-refresh` job). How it works: `docs/toplogger/authentication.md`. Data screens are not built yet.
+Built: connect, status, profile and token refresh (on use, plus a daily `toplogger-refresh` job), routes, route detail (log, repeat, unsend, delete, grade vote, community), and the Top 10. How the connection works: `docs/toplogger/authentication.md`; the screens and API: `docs/toplogger/data.md`. Adventure is not built.
 
 - Refresh tokens are stored server-side only, encrypted at the application layer, in a private table with no client RLS policies. All TopLogger calls go through an authenticated Edge Function that derives the user from the verified JWT, never from a caller-supplied `user_id`.
-- Connecting uses a one-time, short-lived, hashed pairing secret bound to the initiating Supabase user. Never log tokens or authorization headers; return sanitized errors; do not collect TopLogger passwords or expose an unrestricted GraphQL proxy.
-- Latency matters for this module: follow the guidance in the "Latency" section of `docs/specs/pwa/supabase-pwa.md`.
+- Connecting is a one-time paste of the refresh token over HTTPS, validated with TopLogger before anything is stored (a pairing-secret design is archived, not built). Never log tokens or authorization headers; return sanitized errors; do not collect TopLogger passwords or expose an unrestricted GraphQL proxy: the function only sends the documents in `_shared/toplogger/queries.ts`.
+- Latency matters for this module: follow the "Latency" section of `docs/toplogger/data.md` (one round trip per screen, cached data first).
 - TopLogger refresh semantics (verified 2026-10-11): refresh tokens are single use (rotation), expire 14 days after issue and slide on every exchange; access tokens last 10 minutes. Persist the new pair before using it and serialize refreshes per user. See `docs/toplogger/authentication.md`.
 - GitHub disables scheduled workflows after 60 days of repo inactivity, so `pg_cron` in Supabase is the primary keepalive and the Actions ping only a backup.
 
 ## Phases
 
-1. Foundation (done, pending first deploy and phone verification). 2. Supabase (auth, invites, RLS, keepalive). 3. TopLogger module. 4. Later (achievements, more modules). Each phase is verified on a real Android phone.
+1. Foundation (done). 2. Supabase (auth, invites, RLS, keepalive; done). 3. TopLogger module (done except Adventure). 4. Achievements as a hub feature (`docs/specs/achievements/`), then more modules. Each phase is verified on a real Android phone.

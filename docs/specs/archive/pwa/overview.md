@@ -1,6 +1,8 @@
 # Verticale Paniek hub (PWA)
 
-Status: proposed. Supersedes the single-purpose plan in `supabase-pwa.md`, which becomes the spec for the TopLogger module (credential storage, pairing, refresh lifecycle).
+Status: archived 2026-10-15. Built and verified: the foundation, Supabase (auth, invites, RLS, keepalive) and the TopLogger module. Kept for the design rationale. What exists now is documented in `../../../auth.md`, `../../../setup.md`, `../../../module-guide.md` and `../../../toplogger/`; the next feature is specified in `../../achievements/overview.md`.
+
+Originally: supersedes the single-purpose plan in `supabase-pwa.md`, which became the spec for the TopLogger module (credential storage, pairing, refresh lifecycle).
 
 ## Goal
 
@@ -71,7 +73,7 @@ The repo root stays minimal (Pages/Actions plumbing, docs); the app lives in `hu
     app/               Nuxt srcDir
       shell/           module registry, types
       layouts/ components/ pages/ plugins/
-      modules/         hello-a, hello-b, _template (copy to start a module)
+      modules/         toplogger, _template (copy to start a module)
     public/            app icons, made from docs/branding/logo-source.png
     tests/             Vitest
     supabase/          (phase 2) migrations/, functions/
@@ -88,7 +90,7 @@ Each phase ends deployed and verified on a real phone.
 
 ## Module authoring guide
 
-Written in `../../module-guide.md`: copy `_template`, rename, add manifest, add migration prefix, done. Include a checklist for RLS on every new table.
+Written in `../../../module-guide.md`: copy `_template`, rename, add manifest, add migration prefix, done. Include a checklist for RLS on every new table.
 
 ## Open questions
 
@@ -96,4 +98,4 @@ Decided: Nuxt/Vue, GitHub organization `verticale-paniek` with repo `verticale-p
 
 - Custom domain later? (avoids URL changes entirely)
 
-Step-by-step setup actions are in `../../setup.md`.
+Step-by-step setup actions are in `../../../setup.md`.

@@ -39,7 +39,7 @@ Node 22 or newer (the repo is developed on v24). Additionally:
 2. Project Settings > API: copy the **Project URL** and **anon (publishable) key**. These are public and go in the repo config. The **service_role key never goes in the repo**.
 3. Authentication > Providers > Email: enable, **disable "Allow new users to sign up"**, keep "Confirm email" on.
 4. Authentication > URL Configuration: Site URL = `https://verticalepaniek.be`; add it (and `http://localhost:3000`) to redirect URLs. When changing domains, also update `ALLOWED_ORIGINS` in `hub/supabase/functions/_shared/http.ts` and redeploy the Edge Functions.
-5. Nothing to configure for email: invites and password resets are one-time links the admin shares via WhatsApp (see `specs/pwa/overview.md`, Auth).
+5. Nothing to configure for email: invites and password resets are one-time links the admin shares via WhatsApp (see `auth.md`).
 6. Create your own user: Authentication > Users > Add user (email + password). Then set yourself admin in the SQL editor:
    `update auth.users set raw_app_meta_data = raw_app_meta_data || '{"role":"admin"}' where email = '<you>';`
 7. Account settings > Access Tokens: create a personal access token for CI (migrations and function deploys).

@@ -1,8 +1,8 @@
 # TopLogger authentication
 
-How the app connects to a user's TopLogger account and keeps that connection alive. This describes what exists; keep it in step with the code. The original design and its security requirements are in `../specs/pwa/supabase-pwa.md`; owner setup (secrets, cron) is in `setup.md`.
+How the app connects to a user's TopLogger account and keeps that connection alive. This describes what exists; keep it in step with the code. The data screens and the rest of the API are in `data.md`. The original design is archived in `../specs/archive/pwa/supabase-pwa.md`; owner setup (secrets, cron) is in `setup.md`.
 
-Covered: connect, status, disconnect, token refresh (on use and daily), and the profile read. Not covered, because not built yet: the data screens (routes, history, logging ascents).
+Covered: connect, status, disconnect, token refresh (on use and daily), and the profile read. The data screens (routes, history, logging ascents) are in `data.md`.
 
 ## What we know about TopLogger's API
 
@@ -172,6 +172,7 @@ select status_code, content, created from net._http_response order by created de
 
 ## Known limits
 
+- Connecting is a manual paste of the refresh token. The one-time pairing secret and the connector apps (Android WebView, Windows helper) in the archived design are not built.
 - Rate limits and the access-token cache are per function instance (best effort).
 - No key rotation yet.
 - TopLogger's API is undocumented and may change; there is a reconnect path, not a fix, for that.
