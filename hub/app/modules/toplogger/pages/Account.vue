@@ -73,6 +73,7 @@
 
 <script setup lang="ts">
 import { toploggerCall, type ConnectionState } from '../api'
+import TlTabs from '../components/TlTabs.vue'
 import { useTopLogger } from '../useTopLogger'
 
 const supabase = useSupabase()

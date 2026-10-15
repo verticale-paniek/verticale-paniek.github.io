@@ -224,6 +224,8 @@
 </template>
 
 <script setup lang="ts">
+import RouteCard from '../components/RouteCard.vue'
+import TlTabs from '../components/TlTabs.vue'
 import { useTopLogger } from '../useTopLogger'
 import { defaultWallSelection, frenchGrade } from '../utils/domain'
 
