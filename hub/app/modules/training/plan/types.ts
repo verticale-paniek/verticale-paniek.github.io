@@ -3,11 +3,16 @@
 /** The few ways an exercise can be timed. */
 export type TimerId = 'interval-7-3' | 'triple-20' | 'hold-60' | 'rest-120'
 
+/** Work is green, rest blue, ready (get set) orange. */
+export type PhaseKind = 'work' | 'rest' | 'ready'
+
 export interface Timer {
   id: TimerId
   label: string
-  /** One pass of the beep sequence; `repeat` passes make the whole timer. */
-  phases: { label: string, seconds: number }[]
+  /** Seconds of "get ready" before the first phase (0 for none). */
+  leadIn: number
+  /** One pass of the sequence; `repeat` passes make the whole timer. */
+  phases: { label: string, seconds: number, kind: PhaseKind }[]
   repeat: number
 }
 

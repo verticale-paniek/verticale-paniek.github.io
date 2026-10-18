@@ -30,13 +30,13 @@ The 5 s efforts are counted by hand; the timer is the 2 minute rest. Options are
 
 No storage; the circuit lives in memory (it survives moving between the two screens, not a reload).
 
-- **Editor** (`/training`): rounds, and a list of slots. For each slot pick a timer profile (which sets the timer) and one of its exercises; add a slot per family, remove one, reset to the default six. "Start" goes to the runner.
-- **Runner** (`/training/run`): the slots in order; tap one to open its timer (start, pause/resume, reset; phase, pass count, countdown) and see its exercise. One timer is open at a time. Untimed slots just show the exercise. No audio, vibration or screen lock handling yet.
+- **Editor** (`/training/edit`, reached with the Edit button on the run screen): rounds, and a list of slots. For each slot pick a timer profile (which sets the timer) and one of its exercises; add a slot per family, remove one, reset to the default six (25 mm edge hangs, plank, shoulder press; 20 mm edge hangs, fast/slow/normal sit-ups, pull-ups ×8). "Done" goes back to the runner.
+- **Runner** (`/training`, the module's start page, shown with the default circuit): the slots in order; tap one to open its timer (start, pause/resume, reset; phase, pass count, countdown) and see its exercise. One timer is open at a time. Untimed slots just show the exercise. Phases are coloured like an interval-timer app (get ready orange, work green, rest blue; a 5 s lead-in, and the 2 min rest ends with a 5 s get-ready). Cues: a beep and a short vibration for each of the last three seconds of a step, a longer one when the phase changes, a triple beep at the end; "Sound" and "Vibration" can be switched off on the run screen. The screen is kept awake (Wake Lock) while a timer runs. All of it is best effort and untested on a phone: Android may still suspend audio if the screen locks, and iOS is not a target.
 - Code: `hub/app/modules/training/` (`plan/` for timers, profiles and the step maths; `useCircuit.ts` for the in-memory circuit; `components/TimerPanel.vue`).
 
 ## Next
 
-- Try it at the wall and refine the profiles, options and screens before adding more. Then, in order of need: beep and screen-awake handling, saving circuits and completions.
+- Try it at the wall and refine the profiles, options and screens before adding more. Then, in order of need: saving circuits and completions.
 - Weekly picks move from code to the database (readable by the group, editable by the curator); start from the previous week's circuit and adjust. Mechanical, not a functional change.
 - Then, one at a time and each only once the previous is settled: warm-up and stretching, the climbing blocks, timers, facts for achievements.
 

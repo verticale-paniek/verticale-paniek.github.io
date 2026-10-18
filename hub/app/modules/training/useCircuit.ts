@@ -4,12 +4,22 @@ import { getProfile, profilesFor, type Family, type Slot } from './plan'
 
 let nextKey = 1
 
-function makeSlot(family: Family): Slot {
-  const profile = profilesFor(family)[0]!
-  return { key: nextKey++, family, profileId: profile.id, option: profile.options[0]! }
+function makeSlot(family: Family, profileId?: string, option?: string): Slot {
+  const profile = (profileId && getProfile(profileId)) || profilesFor(family)[0]!
+  return { key: nextKey++, family, profileId: profile.id, option: option && profile.options.includes(option) ? option : profile.options[0]! }
 }
 
-const defaultSlots = (): Slot[] => (['fingers', 'core', 'strength', 'fingers', 'core', 'strength'] as Family[]).map(makeSlot)
+/** The circuit you start with: the first three slots are the first options, the next three are picked below. */
+export const defaultPicks: { family: Family, profileId: string, option: string }[] = [
+  { family: 'fingers', profileId: 'fingers-73', option: 'Edge hangs 25 mm' },
+  { family: 'core', profileId: 'core-202020', option: 'Plank: 20 s flat, 20 s left leg up, 20 s right leg up' },
+  { family: 'strength', profileId: 'strength-free', option: 'Shoulder press with weight, 5 each side' },
+  { family: 'fingers', profileId: 'fingers-73', option: 'Edge hangs 20 mm' },
+  { family: 'core', profileId: 'core-202020', option: 'Sit-ups/crunches 20s fast going up, 20s slow going down, 20s normal' },
+  { family: 'strength', profileId: 'strength-free', option: 'Pull-ups ×8' },
+]
+
+const defaultSlots = (): Slot[] => defaultPicks.map(p => makeSlot(p.family, p.profileId, p.option))
 
 const circuit = reactive({
   rounds: 2,

@@ -1,10 +1,21 @@
 <template>
   <section>
+    <NuxtLink
+      to="/training"
+      class="mb-3 flex min-h-11 items-center gap-1.5 text-sm text-accent focus-visible:outline-2 focus-visible:outline-accent"
+    >
+      <Icon
+        name="lucide:arrow-left"
+        aria-hidden="true"
+      />
+      Back to circuit
+    </NuxtLink>
+
     <h1 class="text-2xl font-semibold tracking-tight">
-      Circuit
+      Edit circuit
     </h1>
     <p class="mt-1 text-sm text-muted">
-      Build the strength circuit: pick a timer type and an exercise for each slot, then start. Nothing is saved.
+      Pick a timer type and an exercise for each slot. Changes stay until you reload the app; nothing is saved.
     </p>
 
     <div class="mt-4 flex items-center gap-3 rounded-xl border border-outline/50 bg-surface p-3">
@@ -98,12 +109,10 @@
     </div>
 
     <NuxtLink
-      to="/training/run"
+      to="/training"
       class="mt-6 flex min-h-12 w-full items-center justify-center rounded-xl bg-accent px-4 font-semibold text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-      :class="{ 'pointer-events-none opacity-50': !circuit.slots.length }"
-      :aria-disabled="!circuit.slots.length"
     >
-      Start
+      Done
     </NuxtLink>
   </section>
 </template>

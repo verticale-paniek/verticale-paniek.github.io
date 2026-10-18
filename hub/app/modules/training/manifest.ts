@@ -6,7 +6,7 @@ export default {
   description: 'Build a strength circuit and run its timers',
   icon: '🏋️',
   routes: [
-    { path: '', component: () => import('./pages/Index.vue') },
-    { path: 'run', component: () => import('./pages/Run.vue') },
+    { path: '', component: () => import('./pages/Run.vue') },
+    { path: 'edit', component: () => import('./pages/Edit.vue') },
   ],
 } satisfies ModuleManifest
