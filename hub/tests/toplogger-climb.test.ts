@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { FRENCH_GRADES } from '~/modules/toplogger/utils/domain'
+import { FRENCH_GRADES } from '~/shell/toplogger/domain'
 import {
   deleteLog, fetchCommunity, fetchRouteDetail, logAscent, unsend, validDay, voteGrade, VOTABLE_GRADES,
 } from '../supabase/functions/_shared/toplogger/climb'

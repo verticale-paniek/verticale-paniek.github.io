@@ -227,7 +227,7 @@
 import RouteCard from '../components/RouteCard.vue'
 import TlTabs from '../components/TlTabs.vue'
 import { useTopLogger } from '../useTopLogger'
-import { defaultWallSelection, frenchGrade } from '../utils/domain'
+import { defaultWallSelection, frenchGrade } from '~/shell/toplogger/domain'
 
 const { state, filters, gyms, activeRoutes, load, refresh, selectGym, resetFilters } = useTopLogger()
 

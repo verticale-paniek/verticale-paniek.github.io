@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { Ascent, ClimbUser, Community, Gym, Route, RouteLog } from './utils/domain'
+import type { Ascent, ClimbUser, Community, Gym, Route, RouteLog } from './domain'
 
 export interface ConnectionState {
   connected: boolean

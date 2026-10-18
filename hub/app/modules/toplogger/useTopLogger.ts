@@ -5,10 +5,10 @@ import { computed, reactive } from 'vue'
 import {
   toploggerCall, TopLoggerApiError,
   type HistoryResult, type Home, type Profile, type RouteDetail, type VoteResult, type WriteResult,
-} from './api'
+} from '~/shell/toplogger/api'
 import { cacheKey, clearCache, readCache, writeCache } from './utils/cache'
-import { dayLabel, isActive, topTen, visibleLogs, type Ascent, type ClimbUser, type Community, type Route, type RouteLog } from './utils/domain'
-import { canRank, validAscents } from './utils/history'
+import { dayLabel, isActive, topTen, visibleLogs, type Ascent, type ClimbUser, type Community, type Route, type RouteLog } from '~/shell/toplogger/domain'
+import { canRank, validAscents } from '~/shell/toplogger/history'
 
 interface RouteSnapshot { gymId: string, routes: Route[] }
 

@@ -412,7 +412,7 @@ import TlTabs from '../components/TlTabs.vue'
 import { useTopLogger } from '../useTopLogger'
 import {
   ascentLabel, colorValue, dateLabel, dayLabel, frenchGrade, gradeChoices, isActive, logKind, score,
-} from '../utils/domain'
+} from '~/shell/toplogger/domain'
 
 const router = useRouter()
 const query = useRoute()

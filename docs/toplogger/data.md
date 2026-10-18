@@ -2,6 +2,10 @@
 
 What the TopLogger module shows and how the `toplogger` Edge Function serves it. This describes what exists; keep it in step with `hub/app/modules/toplogger/` and `hub/supabase/functions/`. How the connection and token refresh work is in `authentication.md`. Not built yet: Adventure and achievements, designed in `../specs/achievements/overview.md`.
 
+## Shared client code
+
+The typed request/response layer and the pure domain logic live in the shell, not in the module, so other modules (Training) can use TopLogger without importing this one: `hub/app/shell/toplogger/api.ts` (`toploggerCall` and the action types), `domain.ts` (types, grades, scoring, Top 10) and `history.ts` (ascent validation). The module keeps its own state, cache, pages and components (`useTopLogger.ts`, `utils/cache.ts`).
+
 ## Screens
 
 The module has a bottom tab bar (`/toplogger`):
@@ -32,7 +36,7 @@ The TopLogger user id is never taken from the request; the function looks up you
 
 ## Top 10 history: one call
 
-`history` runs a single `climbDaysPaginated` query filtered to the gym: your session days in the window, each with `climbUserDays { tickType climb { ... } }`. The nested `climb` carries the route's details, so routes that have left the wall need no lookup. Each topped route-day becomes one log in the shape the scoring code (`topTen` in `utils/domain.ts`) already uses. A whole history is one page for a normal climber (the API allows 100 days a page).
+`history` runs a single `climbDaysPaginated` query filtered to the gym: your session days in the window, each with `climbUserDays { tickType climb { ... } }`. The nested `climb` carries the route's details, so routes that have left the wall need no lookup. Each topped route-day becomes one log in the shape the scoring code (`topTen` in `app/shell/toplogger/domain.ts`) already uses. A whole history is one page for a normal climber (the API allows 100 days a page).
 
 Verified against live data on 2026-10-15: for three session days, the tick types from `climbUserDays` matched the per-day `climbLogs` exactly, and the nested limit does not truncate. Not yet checked: a day with a repeat. If the Top 10 ever disagrees with the official app, compare a repeat day first.
 

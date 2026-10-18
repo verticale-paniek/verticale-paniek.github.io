@@ -3,7 +3,7 @@ import {
   averageLabel, colorValue, dayLabel, daysLeft, daysLeftLabel, defaultWallSelection, frenchGrade, gradeChoices, isActive,
   logKind, score, topCount, topTen, visibleLogs,
   type Ascent, type Route, type RouteLog,
-} from '~/modules/toplogger/utils/domain'
+} from '~/shell/toplogger/domain'
 
 const route = (id: string, grade = 600, outAt: string | null = null): Route => ({ id, grade, outAt, name: null, label: '1', wall: null, holdColor: null, setterName: null, climbSetters: [], inAt: null, outPlannedAt: null, climbUser: null })
 const log = (climbId: string, tickType = 1, climbedAtDate = '2026-09-20', gymId = 'gym'): Ascent => ({ id: `${climbId}-${climbedAtDate}`, gymId, climbId, climbType: 'route', tickType, climbedAtDate, valid: true, ticked: true, topped: true })

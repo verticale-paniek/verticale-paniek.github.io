@@ -72,7 +72,7 @@
 </template>
 
 <script setup lang="ts">
-import { toploggerCall, type ConnectionState } from '../api'
+import { toploggerCall, type ConnectionState } from '~/shell/toplogger/api'
 import TlTabs from '../components/TlTabs.vue'
 import { useTopLogger } from '../useTopLogger'
 

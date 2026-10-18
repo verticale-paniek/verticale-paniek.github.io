@@ -50,7 +50,7 @@
 </template>
 
 <script setup lang="ts">
-import { ascentLabel, colorValue, daysLeft, daysLeftLabel, frenchGrade, topCount, type RankedRoute, type Route } from '../utils/domain'
+import { ascentLabel, colorValue, daysLeft, daysLeftLabel, frenchGrade, topCount, type RankedRoute, type Route } from '~/shell/toplogger/domain'
 
 /** In the Top 10, `ranked` shows the ascent that earned the place instead of the route's current best. */
 const props = defineProps<{ route: Route, rank?: number, ranked?: RankedRoute, days?: number }>()

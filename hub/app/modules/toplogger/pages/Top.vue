@@ -130,7 +130,7 @@
 import RouteCard from '../components/RouteCard.vue'
 import TlTabs from '../components/TlTabs.vue'
 import { useTopLogger } from '../useTopLogger'
-import { averageLabel } from '../utils/domain'
+import { averageLabel } from '~/shell/toplogger/domain'
 
 const { state, top, gyms, ranked, rankable, enterTop, refreshTop, setDays, selectGym } = useTopLogger()
 

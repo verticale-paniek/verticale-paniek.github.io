@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import type { Ascent, Route } from '~/modules/toplogger/utils/domain'
-import { canRank, validAscents } from '~/modules/toplogger/utils/history'
+import type { Ascent, Route } from '~/shell/toplogger/domain'
+import { canRank, validAscents } from '~/shell/toplogger/history'
 
 const now = Date.parse('2026-09-28T12:00:00Z')
 const ascent = (climbId: string, date: string, extra: Partial<Ascent> = {}): Ascent =>
