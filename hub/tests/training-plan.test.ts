@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { defaultPicks } from '~/modules/training/useCircuit'
+import { presets as circuitPresets } from '~/modules/training/useCircuit'
 import { buildSteps, cueFor, families, getProfile, getTimer, positionAt, profiles, profilesFor, timers, totalSeconds } from '~/modules/training/plan'
 
 describe('training profiles', () => {
   it('has unique ids and known timers', () => {
     expect(new Set(profiles.map(p => p.id)).size).toBe(profiles.length)
-    expect(timers.map(t => t.id)).toEqual(['interval-7-3', 'triple-20', 'hold-60', 'rest-120'])
+    expect(timers.map(t => t.id)).toEqual(['interval-7-3', 'interval-60-30', 'triple-20', 'hold-60', 'rest-120'])
     for (const profile of profiles) {
       if (profile.timer) {
         expect(getTimer(profile.timer), profile.id).toBeDefined()
@@ -22,14 +22,24 @@ describe('training profiles', () => {
   })
 })
 
-describe('default circuit', () => {
-  it('picks an existing option of a profile in the right family', () => {
-    expect(defaultPicks.map(p => p.family)).toEqual(['fingers', 'core', 'strength', 'fingers', 'core', 'strength'])
-    for (const pick of defaultPicks) {
-      const profile = getProfile(pick.profileId)
-      expect(profile?.family, pick.profileId).toBe(pick.family)
-      expect(profile?.options, pick.option).toContain(pick.option)
+describe('circuit presets', () => {
+  it('only pick existing options of a profile in the right family', () => {
+    for (const preset of circuitPresets) {
+      expect(preset.picks.length, preset.id).toBeGreaterThan(0)
+      for (const pick of preset.picks) {
+        const profile = getProfile(pick.profileId)
+        expect(profile?.family, pick.profileId).toBe(pick.family)
+        expect(profile?.options, pick.option).toContain(pick.option)
+      }
     }
+  })
+
+  it('has the strength circuit (six slots) and a chained abs circuit (ten slots)', () => {
+    const [strength, abs] = circuitPresets
+    expect(strength!.picks.map(p => p.family)).toEqual(['fingers', 'core', 'strength', 'fingers', 'core', 'strength'])
+    expect(strength!.chain).toBe(false)
+    expect(abs!.picks).toHaveLength(10)
+    expect(abs!.chain).toBe(true)
   })
 })
 
@@ -52,6 +62,15 @@ describe('timer steps', () => {
     expect(totalSeconds(steps)).toBe(120)
     expect(totalSeconds(buildSteps(getTimer('triple-20')!))).toBe(65)
     expect(totalSeconds(buildSteps(getTimer('hold-60')!))).toBe(65)
+  })
+
+  it('chains timers: the lead-in only at the start, the rest kept unless it is the last', () => {
+    const abs = getTimer('interval-60-30')!
+    const shape = (steps: ReturnType<typeof buildSteps>) => steps.map(s => `${s.kind}:${s.seconds}`)
+    expect(shape(buildSteps(abs))).toEqual(['ready:5', 'work:60'])
+    expect(shape(buildSteps(abs, { leadIn: false, keepRest: true }))).toEqual(['work:60', 'rest:30'])
+    expect(shape(buildSteps(abs, { leadIn: false }))).toEqual(['work:60'])
+    expect(shape(buildSteps(abs, { keepRest: true }))).toEqual(['ready:5', 'work:60', 'rest:30'])
   })
 
   it('finds the position for an elapsed time', () => {

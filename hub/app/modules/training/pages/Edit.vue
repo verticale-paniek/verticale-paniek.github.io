@@ -15,7 +15,7 @@
       Edit circuit
     </h1>
     <p class="mt-1 text-sm text-muted">
-      Pick a timer type and an exercise for each slot. Changes stay until you reload the app; nothing is saved.
+      Pick a timer type and an exercise for each slot. Changes stay until you reload the app or pick another circuit; nothing is saved.
     </p>
 
     <div class="mt-4 flex items-center gap-3 rounded-xl border border-outline/50 bg-surface p-3">
@@ -41,6 +41,16 @@
         +
       </button>
     </div>
+
+    <label class="mt-3 flex min-h-11 items-center gap-3 rounded-xl border border-outline/50 bg-surface p-3 text-sm">
+      <input
+        v-model="circuit.chain"
+        type="checkbox"
+        class="size-5"
+      >
+      <span class="flex-1 font-medium">Auto-continue</span>
+      <span class="text-xs text-muted">Each exercise starts after the previous one</span>
+    </label>
 
     <ol class="m-0 mt-4 list-none p-0">
       <li

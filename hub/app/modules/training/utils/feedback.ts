@@ -1,10 +1,5 @@
-// Sound, vibration and screen-awake for the timers. All of it is best effort: a phone or browser without one of
-// them just skips it.
-import { reactive } from 'vue'
+// Sound and screen-awake for the timers. Best effort: a phone or browser without one of them just skips it.
 import type { Cue } from '../plan'
-
-/** The climber's choices, in memory like the circuit. */
-export const feedback = reactive({ sound: true, vibration: true })
 
 let audio: AudioContext | undefined
 
@@ -47,26 +42,11 @@ const sounds: Record<Cue, () => void> = {
   },
 }
 
-const buzzes: Record<Cue, number | number[]> = {
-  start: 1000,
-  tick: 30,
-  phase: 250,
-  done: [200, 100, 200, 100, 400],
-}
-
 export function signal(cue: Cue) {
-  if (feedback.sound) {
-    try {
-      sounds[cue]()
-    }
-    catch { /* ignore */ }
+  try {
+    sounds[cue]()
   }
-  if (feedback.vibration) {
-    try {
-      navigator.vibrate?.(buzzes[cue])
-    }
-    catch { /* ignore */ }
-  }
+  catch { /* ignore */ }
 }
 
 let lock: WakeLockSentinel | null = null
@@ -82,9 +62,11 @@ export async function holdScreen() {
 }
 
 export async function releaseScreen() {
+  // Forget the lock first, so a timer starting right after (a chain) can request a new one while this one is released.
+  const old = lock
+  lock = null
   try {
-    await lock?.release()
+    await old?.release()
   }
   catch { /* ignore */ }
-  lock = null
 }

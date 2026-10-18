@@ -13,6 +13,12 @@
       {{ finished ? '0:00' : clock(remaining) }}
     </p>
     <p
+      v-if="sub"
+      class="text-base font-medium"
+    >
+      {{ sub }}
+    </p>
+    <p
       class="text-xs"
       :class="active ? 'text-white/80' : 'text-muted'"
     >
@@ -42,9 +48,23 @@
 import { buildSteps, cueFor, positionAt, totalSeconds, type Position, type Timer } from '../plan'
 import { holdScreen, prepareAudio, releaseScreen, signal } from '../utils/feedback'
 
-const props = defineProps<{ timer: Timer }>()
+/** Present when the timer is one exercise of a chain, where the exercises follow each other by themselves. */
+export interface Chain {
+  /** Exercise name, shown as the title during its work. */
+  title: string
+  /** "3 of 10". */
+  position: string
+  /** Name of the next exercise, shown during the rest; null for the last. */
+  next: string | null
+  last: boolean
+  /** Started by the chain (no lead-in, no long start beep) rather than by a tap. */
+  auto: boolean
+}
 
-const steps = computed(() => buildSteps(props.timer))
+const props = defineProps<{ timer: Timer, chain?: Chain }>()
+const emit = defineEmits<{ finished: [] }>()
+
+const steps = computed(() => buildSteps(props.timer, { leadIn: !props.chain?.auto, keepRest: !!props.chain && !props.chain.last }))
 const label = computed(() => props.timer.label)
 
 const elapsed = ref(0)
@@ -72,7 +92,17 @@ const heading = computed(() => {
   if (!current.value || !active.value) {
     return label.value
   }
+  if (props.chain && current.value.kind === 'work') {
+    return props.chain.title
+  }
   return current.value.passes > 1 && current.value.kind !== 'ready' ? `${current.value.label} · ${current.value.pass} of ${current.value.passes}` : current.value.label
+})
+/** In a chain: where we are, and during the rest what comes next. */
+const sub = computed(() => {
+  if (!props.chain || !active.value || finished.value) {
+    return ''
+  }
+  return current.value?.kind !== 'work' && props.chain.next ? `Next: ${props.chain.next}` : props.chain.position
 })
 const remaining = computed(() => position.value.remaining || steps.value[0]?.seconds || 0)
 
@@ -85,12 +115,14 @@ function tick() {
   elapsed.value = base + (Date.now() - startedAt)
   const next = positionAt(steps.value, elapsed.value)
   const cue = cueFor(last, next)
-  if (cue) {
+  // The end of a chained exercise is not an ending: the next one starts with its own beep.
+  if (cue && !(cue === 'done' && props.chain && !props.chain.last)) {
     signal(cue)
   }
   last = next
   if (next.done) {
     stop()
+    emit('finished')
   }
 }
 
@@ -119,7 +151,7 @@ function start() {
   prepareAudio()
   void holdScreen()
   if (base === 0) {
-    signal('start') // a long beep to get everyone's attention; resuming a pause stays quiet
+    signal(props.chain?.auto ? 'phase' : 'start') // a long beep to get everyone's attention; resuming a pause stays quiet
   }
   handle = setInterval(tick, 100)
 }
@@ -134,7 +166,12 @@ function reset() {
   elapsed.value = 0
 }
 
-onMounted(() => document.addEventListener('visibilitychange', onVisible))
+onMounted(() => {
+  document.addEventListener('visibilitychange', onVisible)
+  if (props.chain?.auto) {
+    start()
+  }
+})
 onBeforeUnmount(() => {
   document.removeEventListener('visibilitychange', onVisible)
   stop()

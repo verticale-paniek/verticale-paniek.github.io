@@ -1,7 +1,7 @@
 // Training definitions. In code for now; the profiles and their options may move to the database later.
 
 /** The few ways an exercise can be timed. */
-export type TimerId = 'interval-7-3' | 'triple-20' | 'hold-60' | 'rest-120'
+export type TimerId = 'interval-7-3' | 'interval-60-30' | 'triple-20' | 'hold-60' | 'rest-120'
 
 /** Work is green, rest blue, ready (get set) orange. */
 export type PhaseKind = 'work' | 'rest' | 'ready'

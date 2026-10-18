@@ -9,17 +9,25 @@ export interface Step {
   passes: number
 }
 
+export interface StepOptions {
+  /** Start with the get-ready countdown (default). Off for a timer that follows another in a chain. */
+  leadIn?: boolean
+  /** Keep a rest at the very end (default: dropped). On for a timer that another follows in a chain. */
+  keepRest?: boolean
+}
+
 /**
  * Flattens a timer into its steps: the lead-in, then the phases repeated. A rest at the very end is dropped (nothing
- * follows it), as interval-timer apps do: 7 on / 3 off × 8 ends after the eighth hang.
+ * follows it), as interval-timer apps do: 7 on / 3 off × 8 ends after the eighth hang. In a chain the rest is kept
+ * when another timer follows, and only the first timer has the lead-in.
  */
-export function buildSteps(timer: Timer): Step[] {
+export function buildSteps(timer: Timer, { leadIn = true, keepRest = false }: StepOptions = {}): Step[] {
   const passes = Array.from({ length: timer.repeat }, (_, pass) =>
     timer.phases.map(phase => ({ ...phase, pass: pass + 1, passes: timer.repeat }))).flat()
-  if (passes.length > 1 && passes.at(-1)?.kind === 'rest') {
+  if (!keepRest && passes.length > 1 && passes.at(-1)?.kind === 'rest') {
     passes.pop()
   }
-  return timer.leadIn > 0 ? [{ label: 'Get ready', seconds: timer.leadIn, kind: 'ready', pass: 1, passes: 1 }, ...passes] : passes
+  return leadIn && timer.leadIn > 0 ? [{ label: 'Get ready', seconds: timer.leadIn, kind: 'ready', pass: 1, passes: 1 }, ...passes] : passes
 }
 
 export const totalSeconds = (steps: Step[]) => steps.reduce((sum, s) => sum + s.seconds, 0)

@@ -11,6 +11,13 @@ export const timers: Timer[] = [
     repeat: 8,
   },
   {
+    id: 'interval-60-30',
+    label: '60 s on / 30 s off',
+    leadIn: 5,
+    phases: [{ label: 'Go', seconds: 60, kind: 'work' }, { label: 'Rest', seconds: 30, kind: 'rest' }],
+    repeat: 1,
+  },
+  {
     id: 'triple-20',
     label: '20 / 20 / 20 s',
     leadIn: 5,

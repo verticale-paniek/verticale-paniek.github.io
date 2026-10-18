@@ -31,8 +31,17 @@ The 5 s efforts are counted by hand; the timer is the 2 minute rest. Options are
 No storage; the circuit lives in memory (it survives moving between the two screens, not a reload).
 
 - **Editor** (`/training/edit`, reached with the Edit button on the run screen): rounds, and a list of slots. For each slot pick a timer profile (which sets the timer) and one of its exercises; add a slot per family, remove one, reset to the default six (25 mm edge hangs, plank, shoulder press; 20 mm edge hangs, fast/slow/normal sit-ups, pull-ups ×8). "Done" goes back to the runner.
-- **Runner** (`/training`, the module's start page, shown with the default circuit): the slots in order; tap one to open its timer (start, pause/resume, reset; phase, pass count, countdown) and see its exercise. One timer is open at a time. Untimed slots just show the exercise. Phases are coloured like an interval-timer app (get ready orange, work green, rest blue; a 5 s lead-in, and the 2 min rest ends with a 5 s get-ready). Cues: a beep and a short vibration for each of the last three seconds of a step, a longer one when the phase changes, a triple beep at the end; "Sound" and "Vibration" can be switched off on the run screen. The screen is kept awake (Wake Lock) while a timer runs. All of it is best effort and untested on a phone: Android may still suspend audio if the screen locks, and iOS is not a target.
+- **Runner** (`/training`, the module's start page, shown with the default circuit): the slots in order; tap one to open its timer (start, pause/resume, reset; phase, pass count, countdown) and see its exercise. One timer is open at a time. Untimed slots just show the exercise. Phases are coloured like an interval-timer app (get ready orange, work green, rest blue; a 5 s lead-in, and the 2 min rest ends with a 5 s get-ready). Cues (sound only; vibration was tried and dropped): a long beep when a timer is started, a short beep for each of the last three seconds of a step, a longer one at each phase change, a triple beep at the end. The screen is kept awake (Wake Lock) only while a timer is running: it is requested on Start and released on pause, reset, finish or when another exercise is opened. Checked on a phone: the screen stayed on through a full 7/3 timer. iOS is not a target.
 - Code: `hub/app/modules/training/` (`plan/` for timers, profiles and the step maths; `useCircuit.ts` for the in-memory circuit; `components/TimerPanel.vue`).
+
+### Preset circuits and auto-continue
+
+A picker on the run screen switches between preset circuits (in memory; picking one replaces what is loaded):
+
+- **Strength circuit**: the six slots above, 2 rounds, a timer started per exercise.
+- **Abs circuit**: ten slots, each "60 s on / 30 s off" with one exercise of the abs circuit as its title, 1 round, **auto-continue**.
+
+Auto-continue is a circuit setting (a checkbox in the editor). Each exercise starts by itself when the previous one ends: only the first has the 5 s lead-in and the long start beep, the others begin with the normal phase beep, the 30 s rest after an exercise is kept (only the last exercise drops its trailing rest and plays the triple end beep), the panel shows the exercise title during its work and "Next: ..." during the rest, plus "3 of 10". The next exercise's panel is opened and scrolled into view. Tapping any exercise starts the chain from there.
 
 ## Next
 
