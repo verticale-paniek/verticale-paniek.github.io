@@ -1,70 +1,55 @@
 # Training module (TL Training)
 
-Status: proposed; nothing in this document is built. This is the digitised version of the "Klimax High Performance Training" plan (2021, source: `docs/Klimax High Perfomance Training 2021.docx`), run as a hub module next to TopLogger Plus. Language: English only.
+Status: in progress. The strength-circuit part is built (code definitions and a read-only circuit screen); everything else below the line "Parked" is design for later and not built. Source: the digitised "Klimax High Performance Training" document (2021, `docs/Klimax High Perfomance Training 2021.docx`). Language: English only.
 
 ## Goal
 
-- Follow a 9-session training period in the app: a guided strength part (exercise list; timers later), and a climbing part that picks routes, checks ascents off and logs them in TopLogger.
-- Run a whole session or just one block (last time the group did "a circuit and a half"). Composing your own session is not part of the UX; sessions and blocks are fixed in code.
-- Track progress per person. A group trains together, but every climber has their own phone and their own progress.
-- Report what happened (block and session completed) as facts the achievements system can consume later, without the module knowing how achievements work.
+- Digitise the group's training, starting with the part that is simplest and most used: the **strength circuit**.
+- Run it on its own, with the phone holder able to use timers later and everyone else just seeing the day's list and marking it done.
+- Track progress per person (every climber has their own phone); the group trains together but nothing is shared live.
+- Later: the climbing part (relative targets, rope/route picking, TopLogger logging), then facts for achievements.
 
-## What the training is
+## What the strength circuit is
 
-Session skeleton, always in this order:
+A circuit is a short list of slots (fingers, core, strength, fingers, core, strength), done once or repeated (two rounds in phase 1). With four people the group splits in two and swaps halfway to share the space; the app does not model that, it is just the list.
 
-1. **Stretching** (band). Always happens. Training room.
-2. **Strength** (training room): the "Trainingskot", 6 exercises, 2 rounds.
-3. **Warm-up** (climbing area): part of the session; sometimes skipped.
-4. **Main** (climbing area): the effective training.
+The only thing the app needs from a slot is its **timer type**. There are four, and the exercise itself does not matter:
 
-**Extras** (pull-ups, abs circuit) are not part of the sessions. They are loose blocks you can pick when you "run one block". They are less structured than strength blocks (a timed pull-up ladder, a 10-exercise circuit), so how much they shape the design is still open; they start as plain checklist blocks.
+| Timer | Used for |
+|---|---|
+| 7 s on / 3 s off × 8 | fingers, phase 1 |
+| 20 / 20 / 20 s | core |
+| 60 s | core or strength holds |
+| 2 min rest | between the 5 s one-arm efforts in phase 2 (the 5 s are counted by hand) |
+| none | untimed strength (shoulder press, pull-ups, push-ups ...) |
 
-Two intensity tiers drive which exercises are chosen. They are only a name and a note in the tool, not behaviour:
+A slot is `{ label, timer?, text }`. The text lists the options for that slot ("edge hangs, or campus deadhangs"); which one is done is not tracked, and options are only codified later if text turns out not to be enough. The climber sees the day's circuit and marks the whole thing done.
 
-- **E (endurance), sessions 1E to 5E**: volume at sub-max grades, double and triple routes, medium ("phase 1") strength.
-- **P (performance), sessions 6P to 9P**: max+1 climbing, capitalising on the endurance weeks, "phase 2" strength (shorter, harder, expert).
+There are two example circuits, **Phase 1 (medium)** and **Phase 2 (hard)**, built from the options in the 2021 document. The nine 2021 sessions are not modelled: the week-by-week picks will live in the database later (start from the previous circuit, adjust).
 
-The point of the endurance blocks is fatigue: train adequate climbing in an exhausted state. **Falling ends your block** (you are spent); your partner then starts theirs. There is no swap in the app. At most a note on the exercise.
+Timers are not built. Each timer type is already a small config (phases and a repeat count), so the beep and the rest countdown can be added without changing the data.
 
-## Concepts
+## Built so far
 
-```
-Session (1E … 9P) ──has ordered──> Block ──is a──> Exercise list | Climb target
-```
+- Definitions in code: `hub/app/modules/training/plan/` (`types.ts`, `timers.ts`, `circuits.ts`).
+- Screens: a list of circuits and a circuit page with its slots and their timer type.
+- No progress tracking yet (completion was built and removed again to keep the first step small).
 
-Sessions are **independent entries**, not steps of a plan: nothing requires doing them in order or all of them, and there is no plan object with its own progress. The 2021 source is an ordered series (endurance first, then performance), so each session carries a tier (E/P) and a number as a *suggested* order, and the list is grouped by a `collection` label (`klimax-2021`). A later period is a new collection. The UX is a list of sessions you can start (a buffet), plus a list of loose blocks. Composing your own session from blocks is the natural next step if we want it, and the block-based model already allows it.
+## Next
 
-| Concept | Meaning | Example |
-|---|---|---|
-| **Collection** | A label grouping sessions defined together in code (`klimax-2021`). Only for listing and for tagging progress. | |
-| **Session** | An ordered list of blocks with a name, tier and note. | `3E` |
-| **Block** | The unit you can run on its own and complete. | "Strength circuit, phase 1", "Pyramid" |
-| **Exercise** | One line inside a strength/extra block. Optionally has a timer. | "Edge hangs 25 mm, 7s on/3s off ×8" |
-| **Climb target** | A climbing block's requirement, in grades relative to your max. | "4 sets: max −1 + max −3" |
+- Try it at the wall and refine the presets and the circuit screen before adding more.
+- Weekly picks move from code to the database (readable by the group, editable by the curator); start from the previous week's circuit and adjust. Mechanical, not a functional change.
+- Then, one at a time and each only once the previous is settled: warm-up and stretching, the climbing blocks, timers, facts for achievements.
 
-### Blocks
+---
 
-| Block kind | Completion | Notes |
-|---|---|---|
-| `stretch` | Tap done | Always part of a full session. |
-| `strength` | Tap done (per exercise optional) | Exercises with an optional timer. "Completed" is all we record for now (no weights or hang times). |
-| `warmup` | Tap done | Part of the session. The finish button never depends on climbed routes: you can log routes in it (same as any climb block) or just tick it. |
-| `climb` | Routes chosen and sent | The interesting one; see below. |
-| `extra` | Tap done | Loose blocks only (not in sessions): pull-ups, abs circuit. |
+# Parked: design for later
 
-A session counts as **completed** when its stretching, strength and main blocks are done. The warm-up is optional (skipping is normal).
+The sections below are the earlier, wider design (sessions made of stretching, strength, warm-up and a climbing block). They are kept because the climbing and architecture parts still apply; the session/block model above them is superseded by the circuit model. Nothing here is built.
 
-### Exercise timers
+## The wider training
 
-A timer belongs to an exercise and is optional: the exercise can be done and ticked without ever starting it. **Not in the first cut.** The group uses a separate timer app for the beep today, and exercises are shown as plain text with their prescription ("7s on / 3s off ×8"). Timers are a nice-to-have for later, so the exercise data is structured now (below) and nothing blocks adding them. The idea: one phone starts it and everyone hears it (beep, 7 s, beep, 3 s, ...). Timer shapes needed by the plan:
-
-- Interval: `on` / `off` seconds, N sets (7/3 ×8).
-- Hold: single duration, with optional sub-phases (plank 20 s flat, 20 s left leg, 20 s right leg; deadhang 20 s straight, 20 s leg raises, 20 s straight).
-- Repeats with rest (one arm 5 s left / 5 s right ×2, 2 min rest between).
-- Circuit: exercise per fixed interval (abs: 60 s exercise, 30 s rest, 10 exercises).
-
-All of them reduce to a list of `{ label, seconds, beep }` steps generated from a small config. So an exercise carries an optional structured `timer` config next to its text from day one; the first cut just ignores it. When timers are built: Wake Lock to keep the screen on and Web Audio for the beep (verify on the phone whether audio survives a locked screen).
+A full session was: stretching with a band (training room), the strength circuit (training room), a warm-up (climbing area, often skipped, never conditional on logged routes), the main climbing block, and optional extras (pull-up ladders, a 10-exercise abs circuit) that are loose blocks, not part of sessions. Sessions were independent entries, not a plan with required order.
 
 ## Climbing blocks
 
@@ -138,29 +123,9 @@ Training does not care about the tick type, and TopLogger does not care about tr
 
 Hold colours are difficulty bands per gym. For now, boulder blocks are **hardcoded to Klimax** ("all greens", "5 yellow, 5 blue, 5 red", colours as TopLogger reports them) and made generic only if we need another gym.
 
-## Session data
+### Shared TopLogger layer (done)
 
-Exercise ids live in code; the sessions below are the first-cut breakdown from the document. Items in **bold** are decisions or inconsistencies in the source to confirm.
-
-| Session | Date (source) | Strength | Warm-up | Main |
-|---|---|---|---|---|
-| 1E | 04/11/2021 | Phase 1 | 2 doubles slow/fast (5B & 5C) | 10 routes per person: 1× 7A, 2× 6C, 3× 6B, 4× 6A (full climb; falling = rest and continue; may stop after 2/3 rests) |
-| 2E | 12/11/2021 | Phase 1 (shoulder press V1/V2, deadhang) | same | 3 sets max −1 + max −3 |
-| 3E | 19/11/2021 | Phase 1 + 1 min crunches | none given | All green boulders (~20), then 5 yellow, 5 blue, 5 red (red replaced by blue if it fails); abs extra |
-| 4E | 26/11/2021 | Phase 1 + ring push-ups | none given | 9-route pyramid |
-| 5E | 03/12/2021 | Phase 1 + tap holds | 1 double (5A) | 3 sets of 10 min up/down at max −4 (5c/6a); abs extra |
-| 6P | 10/12/2021 | Phase 2 | low-grade routes | 3 routes max +1, forced rests at 1/3 and 2/3 |
-| 7P | 17/12/2021 | Phase 2 | low-grade routes | Same, reversed (top third, middle, bottom) |
-| 8P | 07/01/2022 | Phase 2 (8 pull-ups ×2) | low-grade routes | 3 routes max in anti-style |
-| 9P | 14/01/2022 | Phase 2 (box jumps) | ~10 green boulders | 3 green boulders ×4 skipping holds; then max-level projects if time and energy |
-
-Not all of the document's "strength options" appear in the sessions as written; the strength block contents per session (and the phase 1/phase 2 lists) will be transcribed exactly in the build, with this table corrected from you.
-
-Exercise catalogue (strength, from the "Kracht opties"): plank (incl. variations), edge hangs 25 mm, shoulder press, pull-ups, campus deadhangs, hanging leg raises on the ring, ring push-ups, typewriter pull-ups, ab roller, tap-a-hold hangs; phase 2: one-arm edge, plank/front lever on the bar, one-arm sloper, one-arm lock-off at 90°, ring dips, ring plank, campus ladders (hand over hand, one low and one stepping, two hands together).
-
-## Architecture
-
-### Shared TopLogger layer
+Done: `api.ts`, `domain.ts` and `history.ts` now live in `hub/app/shell/toplogger/` (see `docs/toplogger/data.md`). The original reasoning:
 
 Both TopLogger Plus and Training need TopLogger. The server side is already shared: one `toplogger` Edge Function, one `POST { action }` endpoint. The **client side** is not: `api.ts` (typed requests and `toploggerCall`), the domain types and helpers (`Route`, `frenchGrade`, ...) and the data composable live inside `app/modules/toplogger/`, and modules may not import each other.
 
@@ -191,56 +156,8 @@ Training does **not** read TopLogger's facts. It talks to TopLogger through the 
 
 Until the achievements core exists Training keeps its own tables and the facts are added when the shell is ready; the module must not depend on that being built first.
 
-### Data model
-
-Tables prefixed `training_`, RLS on, owner-only policies per operation (as `toplogger_prefs`).
-
-```sql
-create table public.training_runs (
-  id          uuid primary key default gen_random_uuid(),
-  user_id     uuid not null references auth.users (id) on delete cascade,
-  collection  text not null,            -- 'klimax-2021'
-  session_id  text,                     -- '1E'; null for a single block run on its own
-  started_at  timestamptz not null default now(),
-  finished_at timestamptz
-);
-
-create table public.training_block_runs (
-  run_id      uuid not null references public.training_runs (id) on delete cascade,
-  user_id     uuid not null references auth.users (id) on delete cascade,
-  block_id    text not null,
-  completed_at timestamptz,
-  details     jsonb not null default '{}',  -- rope, chosen routes, ascents logged, partial result
-  primary key (run_id, block_id)
-);
-
-create table public.training_prefs (       -- user_id pk; max-grade override, preferred gym
-  ...
-);
-```
-
-Session and block definitions are code, not rows, so changing them never needs a migration. Completion is derived from block runs.
-
-### Offline and the group setting
-
-- Sessions work without a connection; progress writes queue to the database when reachable (same cache-first approach as the TopLogger module). Logging ascents to TopLogger needs a connection; if it fails the chosen routes stay on the block so you can retry.
-- No live shared sessions in the first cut; when timers arrive, the phone that starts one is just a normal client and needs no sync.
-
-## Phasing
-
-Levels (max, absolute grades) are deliberately **not** part of the first steps; the data model allows them.
-
-1. **Shared TopLogger layer**: move api + domain to the shell, TopLogger Plus on top of it, tests green. No behaviour change.
-2. **Sessions, runner and strength**: definitions (all 9 sessions as independent entries, targets modelled relative), session list, session/block screens, exercise text with structured (unused) timer config, stretching/strength/warm-up/extras completion, progress tables. Usable at the wall without any climbing integration.
-3. **Climb blocks without levels**: show the relative target, the gym's ropes (section and rope number) and their routes, pick the rope and routes, log each ascent via `logAscent`, track progress against the block's slot count, partial results. The climber judges the grades.
-4. **Max and absolute grades**: max from the Top 10, targets resolved to concrete grades, ropes/routes highlighted or filtered by the resolved grades.
-5. **Facts**: publish block and session facts once the achievements core exists; training achievements defined in the module.
-6. **Later**: exercise timers with beep, rope suggestions from the grade distribution, other gyms, a second collection, a manual max override.
-
 ## Open questions
 
-Settled: the 2021 grades are based on a reference max of 7a with one step = one letter (2 sub-grades), so they map to clean offsets (table above); targets are modelled relative to max and shown absolute only once max exists (not in the first steps); max comes from the Top 10 including sub-grades; ascents are logged one at a time; timers come later.
-
-1. **Rope number:** the TopLogger module already shows `label` as "Rope <label>" for routes without a name, and `wall.nameLoc` is the section. Confirm against live Klimax data in the build phase that `label` really is the rope number and that routes on the same rope share it.
-2. **Strength contents per session:** I transcribed them from the exercise lists; please check them when we get to the session data.
-3. **Warm-up grades:** "low-grade routes" and "easy boulders" have no concrete grade in the source; show them as free text, or give them a max-relative default?
+1. **Rope number:** the TopLogger module already shows `label` as "Rope <label>" for unnamed routes, and `wall.nameLoc` is the section. Confirm against live Klimax data that `label` is the rope number and that routes on a rope share it.
+2. **Circuit options:** check the option lists in the two example circuits against what you actually do.
+3. **Warm-up grades:** "low-grade routes" and "easy boulders" have no grade in the source; free text or relative to max?
