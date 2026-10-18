@@ -1,30 +1,36 @@
-// Training definitions. Code for now; the circuits (the weekly picks) move to the database once the shape is settled.
+// Training definitions. In code for now; the profiles and their options may move to the database later.
 
-/** The few ways a slot can be timed. */
+/** The few ways an exercise can be timed. */
 export type TimerId = 'interval-7-3' | 'triple-20' | 'hold-60' | 'rest-120'
 
 export interface Timer {
   id: TimerId
   label: string
-  /** The beep sequence, in seconds: [phase length, ...]. `repeat` repeats it. Not used by the UI yet. */
+  /** One pass of the beep sequence; `repeat` passes make the whole timer. */
   phases: { label: string, seconds: number }[]
   repeat: number
 }
 
-/** One of the circuit's slots. The text carries the options; whether they need to be codified is decided later. */
-export interface Slot {
-  /** What the slot is for, e.g. 'Fingers'. */
-  label: string
-  /** Absent for untimed slots. */
+export type Family = 'fingers' | 'core' | 'strength'
+
+/**
+ * A timer profile: a timer type (or none) and the exercises that fall under it.
+ * Picking the profile picks the timer; picking an option says what is done. Options are plain text for now.
+ */
+export interface Profile {
+  id: string
+  family: Family
+  title: string
+  /** Absent for untimed exercises. */
   timer?: TimerId
-  text: string
+  options: string[]
 }
 
-export interface Circuit {
-  id: string
-  title: string
-  /** Times the slots are repeated. */
-  rounds: number
-  note?: string
-  slots: Slot[]
+/** One slot of the circuit being built (in memory only). */
+export interface Slot {
+  /** Stable key for lists; not stored anywhere. */
+  key: number
+  family: Family
+  profileId: string
+  option: string
 }

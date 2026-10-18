@@ -1,6 +1,6 @@
 # Training module (TL Training)
 
-Status: in progress. The strength-circuit part is built (code definitions and a read-only circuit screen); everything else below the line "Parked" is design for later and not built. Source: the digitised "Klimax High Performance Training" document (2021, `docs/Klimax High Perfomance Training 2021.docx`). Language: English only.
+Status: in progress. The strength-circuit editor and timer runner are built; everything else below the line "Parked" is design for later and not built. Source: the digitised "Klimax High Performance Training" document (2021, `docs/Klimax High Perfomance Training 2021.docx`). Language: English only.
 
 ## Goal
 
@@ -11,33 +11,32 @@ Status: in progress. The strength-circuit part is built (code definitions and a 
 
 ## What the strength circuit is
 
-A circuit is a short list of slots (fingers, core, strength, fingers, core, strength), done once or repeated (two rounds in phase 1). With four people the group splits in two and swaps halfway to share the space; the app does not model that, it is just the list.
+A circuit is a short list of slots (fingers, core, strength, fingers, core, strength), repeated for a number of rounds. With four people the group splits in two and swaps halfway to share the space; the app does not model that, it is just the list.
 
-The only thing the app needs from a slot is its **timer type**. There are four, and the exercise itself does not matter:
+The app only needs the **timer type** of a slot; the exercise itself does not matter. A **profile** ties a timer type to the exercises that fall under it:
 
-| Timer | Used for |
-|---|---|
-| 7 s on / 3 s off × 8 | fingers, phase 1 |
-| 20 / 20 / 20 s | core |
-| 60 s | core or strength holds |
-| 2 min rest | between the 5 s one-arm efforts in phase 2 (the 5 s are counted by hand) |
-| none | untimed strength (shoulder press, pull-ups, push-ups ...) |
+| Family | Profile (timer) | Example options |
+|---|---|---|
+| Fingers | 7 s on / 3 s off × 8 | edge hangs 25 mm, campus deadhangs |
+| Fingers | one arm 5 s left / 5 s right, **2 min rest**, again | one-arm edge hang, one-arm sloper |
+| Core | 20 / 20 / 20 s | plank (flat, left leg, right leg), deadhang with leg raises |
+| Core | 60 s | abs, plank in the rings |
+| Strength | untimed | shoulder press, pull-ups, push-ups, ab roller |
+| Strength | 5 s efforts, **2 min rest** | front lever, one-arm lock-off, pull-ups ×8 twice |
 
-A slot is `{ label, timer?, text }`. The text lists the options for that slot ("edge hangs, or campus deadhangs"); which one is done is not tracked, and options are only codified later if text turns out not to be enough. The climber sees the day's circuit and marks the whole thing done.
+The 5 s efforts are counted by hand; the timer is the 2 minute rest. Options are plain text for now and become structured only if text proves not to be enough.
 
-There are two example circuits, **Phase 1 (medium)** and **Phase 2 (hard)**, built from the options in the 2021 document. The nine 2021 sessions are not modelled: the week-by-week picks will live in the database later (start from the previous circuit, adjust).
+## Built so far: a circuit editor and a timer runner
 
-Timers are not built. Each timer type is already a small config (phases and a repeat count), so the beep and the rest countdown can be added without changing the data.
+No storage; the circuit lives in memory (it survives moving between the two screens, not a reload).
 
-## Built so far
-
-- Definitions in code: `hub/app/modules/training/plan/` (`types.ts`, `timers.ts`, `circuits.ts`).
-- Screens: a list of circuits and a circuit page with its slots and their timer type.
-- No progress tracking yet (completion was built and removed again to keep the first step small).
+- **Editor** (`/training`): rounds, and a list of slots. For each slot pick a timer profile (which sets the timer) and one of its exercises; add a slot per family, remove one, reset to the default six. "Start" goes to the runner.
+- **Runner** (`/training/run`): the slots in order; tap one to open its timer (start, pause/resume, reset; phase, pass count, countdown) and see its exercise. One timer is open at a time. Untimed slots just show the exercise. No audio, vibration or screen lock handling yet.
+- Code: `hub/app/modules/training/` (`plan/` for timers, profiles and the step maths; `useCircuit.ts` for the in-memory circuit; `components/TimerPanel.vue`).
 
 ## Next
 
-- Try it at the wall and refine the presets and the circuit screen before adding more.
+- Try it at the wall and refine the profiles, options and screens before adding more. Then, in order of need: beep and screen-awake handling, saving circuits and completions.
 - Weekly picks move from code to the database (readable by the group, editable by the curator); start from the previous week's circuit and adjust. Mechanical, not a functional change.
 - Then, one at a time and each only once the previous is settled: warm-up and stretching, the climbing blocks, timers, facts for achievements.
 

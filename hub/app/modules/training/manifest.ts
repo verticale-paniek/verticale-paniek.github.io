@@ -3,10 +3,10 @@ import type { ModuleManifest } from '~/shell/types'
 export default {
   id: 'training',
   name: 'TL Training',
-  description: 'Klimax training: strength circuits and progress',
+  description: 'Build a strength circuit and run its timers',
   icon: '🏋️',
   routes: [
     { path: '', component: () => import('./pages/Index.vue') },
-    { path: 'circuit', component: () => import('./pages/Circuit.vue') },
+    { path: 'run', component: () => import('./pages/Run.vue') },
   ],
 } satisfies ModuleManifest
