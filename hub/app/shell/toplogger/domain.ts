@@ -199,7 +199,7 @@ export function isNewRoute(inAt: string | null, now = new Date(), days = 14): bo
   return Number.isFinite(at) && at <= now.getTime() && now.getTime() - at < days * 86400000
 }
 
-export const daysLeftLabel =(left: number) => left <= 0 ? 'Expires today' : left === 1 ? '1 day left' : `${left} days left`
+export const daysLeftLabel = (left: number) => left <= 0 ? 'Expires today' : left === 1 ? '1 day left' : `${left} days left`
 
 export function dateLabel(value: string | null | undefined): string {
   return value && Number.isFinite(dateValue(value))
