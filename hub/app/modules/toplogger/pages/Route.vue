@@ -57,6 +57,10 @@
             class="mt-2 inline-block rounded border px-1.5 py-0.5 text-xs"
             :class="topped ? 'border-emerald-500/60 text-emerald-600 dark:text-emerald-400' : 'border-outline text-muted'"
           >{{ ascentLabel(route.climbUser?.tickType) }}</span>
+          <span
+            v-if="isNewRoute(route.inAt)"
+            class="ml-2 inline-block rounded-full bg-accent/15 px-2 py-0.5 text-xs font-semibold text-accent"
+          >New</span>
         </div>
         <span
           class="size-7 shrink-0 rounded-full border border-outline"
@@ -411,7 +415,7 @@
 import TlTabs from '../components/TlTabs.vue'
 import { useTopLogger } from '../useTopLogger'
 import {
-  ascentLabel, colorValue, dateLabel, dayLabel, frenchGrade, gradeChoices, isActive, logKind, score,
+  ascentLabel, colorValue, dateLabel, dayLabel, frenchGrade, gradeChoices, isActive, isNewRoute, logKind, score,
 } from '~/shell/toplogger/domain'
 
 const router = useRouter()

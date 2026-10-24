@@ -26,6 +26,10 @@
         >{{ days ? `${daysLeftLabel(daysLeft(ranked.ascent.climbedAtDate, days))} · ` : '' }}{{ ranked.score }} points</span>
       </span>
       <span
+        v-if="isNew"
+        class="shrink-0 rounded-full bg-accent/15 px-2 py-0.5 text-xs font-semibold text-accent"
+      >New</span>
+      <span
         v-if="tops > 1 && !ranked"
         class="shrink-0 text-xs tabular-nums text-muted"
       ><span aria-hidden="true">×{{ tops }}</span><span class="sr-only">{{ tops }} ascents</span></span>
@@ -50,12 +54,13 @@
 </template>
 
 <script setup lang="ts">
-import { ascentLabel, colorValue, daysLeft, daysLeftLabel, frenchGrade, topCount, type RankedRoute, type Route } from '~/shell/toplogger/domain'
+import { ascentLabel, colorValue, daysLeft, daysLeftLabel, frenchGrade, isNewRoute, topCount, type RankedRoute, type Route } from '~/shell/toplogger/domain'
 
 /** In the Top 10, `ranked` shows the ascent that earned the place instead of the route's current best. */
 const props = defineProps<{ route: Route, rank?: number, ranked?: RankedRoute, days?: number }>()
 const tickType = computed(() => props.ranked?.ascent.tickType ?? props.route.climbUser?.tickType ?? 0)
 const done = computed(() => tickType.value > 0)
 const attempted = computed(() => !done.value && !!props.route.climbUser?.totalTries)
+const isNew = computed(() => isNewRoute(props.route.inAt))
 const tops = computed(() => topCount(props.route.climbUser))
 </script>

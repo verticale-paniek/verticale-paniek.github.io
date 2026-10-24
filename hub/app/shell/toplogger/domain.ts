@@ -193,7 +193,13 @@ export function daysLeft(climbedAtDate: string, days: number, now = new Date()):
   return days - Math.round((today.getTime() - day.getTime()) / 86400000)
 }
 
-export const daysLeftLabel = (left: number) => left <= 0 ? 'Expires today' : left === 1 ? '1 day left' : `${left} days left`
+/** A route is new for two weeks after it went up, so a replaced route stands out from the one it replaced. */
+export function isNewRoute(inAt: string | null, now = new Date(), days = 14): boolean {
+  const at = inAt ? Date.parse(inAt) : NaN
+  return Number.isFinite(at) && at <= now.getTime() && now.getTime() - at < days * 86400000
+}
+
+export const daysLeftLabel =(left: number) => left <= 0 ? 'Expires today' : left === 1 ? '1 day left' : `${left} days left`
 
 export function dateLabel(value: string | null | undefined): string {
   return value && Number.isFinite(dateValue(value))
