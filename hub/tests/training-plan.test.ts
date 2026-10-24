@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { presets as circuitPresets } from '~/modules/training/useCircuit'
+import { presets as circuitPresets, seedSessions } from '~/modules/training/useSession'
 import { buildSteps, cueFor, families, getProfile, getTimer, positionAt, profiles, profilesFor, timers, totalSeconds } from '~/modules/training/plan'
 
 describe('training profiles', () => {
@@ -25,7 +25,13 @@ describe('training profiles', () => {
 describe('circuit presets', () => {
   it('only pick existing options of a profile in the right family', () => {
     for (const preset of circuitPresets) {
-      expect(preset.picks.length, preset.id).toBeGreaterThan(0)
+      if (preset.kind === 'circuit' && preset.id !== 'empty') {
+        expect(preset.picks.length, preset.id).toBeGreaterThan(0)
+      }
+      if (preset.kind === 'pick') {
+        expect(preset.pool.length, preset.id).toBeGreaterThan(0)
+        expect(preset.pool, preset.id).toEqual(expect.arrayContaining(preset.defaults))
+      }
       for (const pick of preset.picks) {
         const profile = getProfile(pick.profileId)
         expect(profile?.family, pick.profileId).toBe(pick.family)
@@ -40,6 +46,26 @@ describe('circuit presets', () => {
     expect(strength!.chain).toBe(false)
     expect(abs!.picks).toHaveLength(10)
     expect(abs!.chain).toBe(true)
+  })
+})
+
+describe('seed sessions', () => {
+  it('only list existing block presets', () => {
+    const ids = circuitPresets.map(p => p.id)
+    expect(new Set(ids).size).toBe(ids.length)
+    for (const session of seedSessions) {
+      expect(session.blocks.length, session.name).toBeGreaterThan(0)
+      for (const id of session.blocks) {
+        expect(ids, session.name).toContain(id)
+      }
+    }
+    expect(seedSessions[0]!.blocks).toEqual(['stretch', 'warmup', 'strength', 'main'])
+  })
+
+  it('has pick blocks for stretch, warm-up and main', () => {
+    const kinds = Object.fromEntries(circuitPresets.map(p => [p.id, p.kind]))
+    expect(kinds).toMatchObject({ stretch: 'pick', warmup: 'pick', main: 'pick', strength: 'circuit', abs: 'circuit' })
+    expect(circuitPresets.find(p => p.id === 'stretch')!.pool).toHaveLength(1)
   })
 })
 

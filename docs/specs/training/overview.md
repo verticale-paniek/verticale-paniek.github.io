@@ -26,28 +26,50 @@ The app only needs the **timer type** of a slot; the exercise itself does not ma
 
 The 5 s efforts are counted by hand; the timer is the 2 minute rest. Options are plain text for now and become structured only if text proves not to be enough.
 
-## Built so far: a circuit editor and a timer runner
+## Built so far: sessions, a block editor and a timer runner
 
-No storage; the circuit lives in memory (it survives moving between the two screens, not a reload).
+No storage; sessions live in memory (they survive moving between screens, not a reload). Making a session and running it are separate screens, and the run page is one view of the whole session. See "Sessions" below for the screens; the two bullets below are the circuit block's editor and runner.
 
-- **Editor** (`/training/edit`, reached with the Edit button on the run screen): rounds, and a list of slots. For each slot pick a timer profile (which sets the timer) and one of its exercises; add a slot per family, remove one, reset to the default six (25 mm edge hangs, plank, shoulder press; 20 mm edge hangs, fast/slow/normal sit-ups, pull-ups ×8). "Done" goes back to the runner.
-- **Runner** (`/training`, the module's start page, shown with the default circuit): the slots in order; tap one to open its timer (start, pause/resume, reset; phase, pass count, countdown) and see its exercise. One timer is open at a time. Untimed slots just show the exercise. Phases are coloured like an interval-timer app (get ready orange, work green, rest blue; a 5 s lead-in, and the 2 min rest ends with a 5 s get-ready). Cues (sound only; vibration was tried and dropped): a long beep when a timer is started, a short beep for each of the last three seconds of a step, a longer one at each phase change, a triple beep at the end. The screen is kept awake (Wake Lock) only while a timer is running: it is requested on Start and released on pause, reset, finish or when another exercise is opened. Checked on a phone: the screen stayed on through a full 7/3 timer. iOS is not a target.
-- Code: `hub/app/modules/training/` (`plan/` for timers, profiles and the step maths; `useCircuit.ts` for the in-memory circuit; `components/TimerPanel.vue`).
+- **Circuit editor** (`/training/block-edit`): rounds, and a list of slots. For each slot pick a timer profile (which sets the timer) and one of its exercises; add a slot per family, remove one, reset the block to its preset (the strength circuit's default six (25 mm edge hangs, plank, shoulder press; 20 mm edge hangs, fast/slow/normal sit-ups, pull-ups ×8)). "Done" goes back to the session editor.
+- **Circuit runner** (inside the run session page): the slots in order; tap one to open its timer (start, pause/resume, reset; phase, pass count, countdown) and see its exercise. One timer is open at a time. Untimed slots just show the exercise. Phases are coloured like an interval-timer app (get ready orange, work green, rest blue; a 5 s lead-in, and the 2 min rest ends with a 5 s get-ready). Cues (sound only; vibration was tried and dropped): a long beep when a timer is started, a short beep for each of the last three seconds of a step, a longer one at each phase change, a triple beep at the end. The screen is kept awake (Wake Lock) only while a timer is running: it is requested on Start and released on pause, reset, finish or when another exercise is opened. Checked on a phone: the screen stayed on through a full 7/3 timer. iOS is not a target.
+- Code: `hub/app/modules/training/` (`plan/` for timers, profiles and the step maths; `useSession.ts` for the in-memory session and its current block; `components/TimerPanel.vue`).
 
 ### Preset circuits and auto-continue
 
-A picker on the run screen switches between preset circuits (in memory; picking one replaces what is loaded):
+Circuit blocks come from presets, added in the session editor:
 
 - **Strength circuit**: the six slots above, 2 rounds, a timer started per exercise.
 - **Abs circuit**: ten slots, each "60 s on / 30 s off" with one exercise of the abs circuit as its title, 1 round, **auto-continue**.
 
 Auto-continue is a circuit setting (a checkbox in the editor). Each exercise starts by itself when the previous one ends: only the first has the 5 s lead-in and the long start beep, the others begin with the normal phase beep, the 30 s rest after an exercise is kept (only the last exercise drops its trailing rest and plays the triple end beep), the panel shows the exercise title during its work and "Next: ..." during the rest, plus "3 of 10". The next exercise's panel is opened and scrolled into view. Tapping any exercise starts the chain from there.
 
+## Sessions
+
+A **session** is a named, ordered list of **blocks**; a circuit is one kind of block. Sessions are made and then run, in separate screens. In memory only, like the circuits: nothing is saved yet.
+
+| Screen | Route | What it does |
+|---|---|---|
+| Sessions | `/training` | Run side: the list of sessions, tap one to run it. "Edit sessions" opens the edit side. Starts with "Full evening" (stretch, warm-up, strength, main) and "Strength circuit" and "Abs circuit" (one circuit each). |
+| Run session | `/training/run` | The whole session on one page, no edit controls: each block is a card with a **manual** done tick (untimed blocks have no end signal). A pick block shows its chosen items and note; a circuit shows its exercises, and tapping one opens its timer in place (one timer open at a time in the whole session). Ticking a block folds it away. "Clear ticks". |
+| Edit sessions | `/training/manage` | Edit side: tap or pencil to edit a session, copy, delete, "New session". |
+| Edit session | `/training/edit` | Name, add blocks from the presets, move, remove; tap a block to edit it. |
+| Edit block | `/training/block-edit` | Title; for a circuit the editor above; for a pick block the chosen items and a note. "Reset block" restores the preset. |
+
+Block presets:
+
+| Block | Kind | Content |
+|---|---|---|
+| Strength circuit, Abs circuit, Empty circuit | circuit | Slots and timers as above. |
+| Stretch | pick | A single item: stretching with the Dynaband. |
+| Warm-up | pick | Choose from: 3 routes or 2 doubles (5th grade), a few low-grade routes, traverse, 5 or 10 easy boulders, about 10 green boulders, 1 double to loosen up (5A). |
+| Main | pick | Choose from the climbing formats of the 2021 document (volume by grade, max sets, boulder volume, pyramid, up and down, colour boulders, stepped sets, max +1, max +1 reversed, anti-style, dynamic boulders, all greens, 5 yellow/blue/red, projects), written relative to your max. The first nine are the main parts of trainings 1 to 9 in order, the rest are other formats from the document. |
+
+A pick block holds the chosen items (several are allowed) plus a free-text note. The options are plain text in `plan/options.ts`. The Main options are only text for now; the real climbing blocks (rope picking, TopLogger logging) are the parked design below and would replace them.
+
 ## Next
 
-- Try it at the wall and refine the profiles, options and screens before adding more. Then, in order of need: saving circuits and completions.
-- Weekly picks move from code to the database (readable by the group, editable by the curator); start from the previous week's circuit and adjust. Mechanical, not a functional change.
-- Then, one at a time and each only once the previous is settled: warm-up and stretching, the climbing blocks, timers, facts for achievements.
+- Try it at the wall and refine the options and screens before adding more.
+- Then, in order of need: saving sessions and completions (weekly picks move from code to the database, readable by the group, editable by the curator; start from the previous week's session, which "Copy" already imitates), then the climbing blocks, then facts for achievements.
 
 ---
 
