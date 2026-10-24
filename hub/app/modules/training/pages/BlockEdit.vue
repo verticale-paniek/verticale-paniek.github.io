@@ -1,16 +1,5 @@
 <template>
   <section v-if="block">
-    <NuxtLink
-      to="/training/edit"
-      class="mb-3 flex min-h-11 items-center gap-1.5 text-sm text-accent focus-visible:outline-2 focus-visible:outline-accent"
-    >
-      <Icon
-        name="lucide:arrow-left"
-        aria-hidden="true"
-      />
-      Back to session
-    </NuxtLink>
-
     <h1 class="text-2xl font-semibold tracking-tight">
       Edit block
     </h1>
@@ -211,4 +200,5 @@ function onAdd(select: HTMLSelectElement) {
   addChoice(select.value)
   select.value = ''
 }
+useHeaderBack('Back to session', '/training/edit')
 </script>

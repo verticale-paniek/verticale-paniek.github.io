@@ -2,17 +2,6 @@
   <section class="pb-20">
     <TlTabs />
 
-    <button
-      class="mb-3 flex min-h-11 items-center gap-1.5 text-sm text-accent focus-visible:outline-2 focus-visible:outline-accent"
-      @click="back"
-    >
-      <Icon
-        name="lucide:arrow-left"
-        aria-hidden="true"
-      />
-      Back to routes
-    </button>
-
     <p
       v-if="state.needsConnect"
       class="my-4 rounded-xl border border-outline/50 bg-surface p-4"
@@ -481,6 +470,8 @@ function back() {
     void router.push('/toplogger')
   }
 }
+
+useHeaderBack('Back to routes', back)
 
 onMounted(() => openRoute(id.value))
 watch(id, value => openRoute(value))

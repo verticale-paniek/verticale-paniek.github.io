@@ -1,16 +1,5 @@
 <template>
   <section>
-    <NuxtLink
-      to="/training"
-      class="mb-3 flex min-h-11 items-center gap-1.5 text-sm text-accent focus-visible:outline-2 focus-visible:outline-accent"
-    >
-      <Icon
-        name="lucide:arrow-left"
-        aria-hidden="true"
-      />
-      Back to sessions
-    </NuxtLink>
-
     <h1 class="text-2xl font-semibold tracking-tight">
       Edit sessions
     </h1>
@@ -98,4 +87,5 @@ async function onNew() {
   newSession()
   await navigateTo('/training/edit')
 }
+useHeaderBack('Back to sessions', '/training')
 </script>

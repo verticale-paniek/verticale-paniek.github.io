@@ -29,3 +29,33 @@ The site uses hash routing (`/#/...`), because GitHub Pages cannot serve deep li
 - Invite links may open in the browser instead of the installed app. That is fine: the password is set there; then open the installed app and sign in.
 - A ban or role change takes effect when the user's access token next refreshes (up to an hour), because the Edge Functions verify the JWT locally (see the Latency section in `toplogger/data.md`).
 - Link generation, ban and delete are the only places the service-role key is used for users. Never log the links; they are bearer credentials until used.
+
+## Managing admins (SQL editor)
+
+There is no UI for roles; use the Supabase SQL editor.
+
+List the admins:
+
+```sql
+select email, raw_app_meta_data->>'role' as role
+from auth.users
+where raw_app_meta_data->>'role' = 'admin';
+```
+
+Make a user admin (also the way to fix the first admin, see `setup.md`):
+
+```sql
+update auth.users
+set raw_app_meta_data = coalesce(raw_app_meta_data, '{}'::jsonb) || '{"role":"admin"}'
+where email = '<email>';
+```
+
+Remove admin:
+
+```sql
+update auth.users
+set raw_app_meta_data = raw_app_meta_data - 'role'
+where email = '<email>';
+```
+
+The user must sign out and in again (or wait for the token refresh) before the change shows up, see the notes above.

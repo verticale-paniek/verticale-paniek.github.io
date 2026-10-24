@@ -1,16 +1,5 @@
 <template>
   <section v-if="session">
-    <NuxtLink
-      to="/training"
-      class="mb-3 flex min-h-11 items-center gap-1.5 text-sm text-accent focus-visible:outline-2 focus-visible:outline-accent"
-    >
-      <Icon
-        name="lucide:arrow-left"
-        aria-hidden="true"
-      />
-      Back to sessions
-    </NuxtLink>
-
     <h1 class="text-2xl font-semibold tracking-tight">
       {{ session.name }}
     </h1>
@@ -213,4 +202,5 @@ function onFinished(item: Block, index: number) {
   autoKey.value = timerOf(next) ? next.key : null
   nextTick(() => document.getElementById(`slot-${next.key}`)?.scrollIntoView({ block: 'center', behavior: 'smooth' }))
 }
+useHeaderBack('Back to sessions', '/training')
 </script>
