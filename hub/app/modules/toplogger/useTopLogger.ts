@@ -25,6 +25,7 @@ const state = reactive({
   cacheWarning: false,
   /** True while the climber is inside the module. The list refetches on entering it, not when moving between its tabs. */
   entered: false,
+  view: 'list' as 'list' | 'map',
 })
 
 /** List filters live here (not in the page) so they survive opening a route and coming back. */
@@ -84,6 +85,7 @@ function save(kind: string, scope: string, data: unknown): string {
 }
 
 function loadCached(account: string): void {
+  state.view = 'list'
   Object.assign(state, { account, profile: null, gymId: '', routes: [], syncedAt: '', error: '', needsConnect: false, cacheWarning: false, entered: false })
   const profile = readCache<Profile>(cacheKey(account, '_', 'profile'))
   const gym = readCache<string>(cacheKey(account, '_', 'gym'))

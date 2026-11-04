@@ -8,7 +8,7 @@ export const ROUTE_FIELDS = `${ROUTE_CORE}
   climbUser(userId: $userId) { grade tickType totalTries totalTicks triedFirstAtDate tickedFirstAtDate }`
 
 export const ROUTES = `query PlusRoutes($gymId: ID!, $userId: ID!, $pagination: PaginationInputClimbs) {
-  climbs(gymId: $gymId, climbType: route, pagination: $pagination) { pagination { total page perPage } data { ${ROUTE_FIELDS} } }
+  climbs(gymId: $gymId, climbType: route, pagination: $pagination) { pagination { total page perPage } data { ${ROUTE_FIELDS} positionX positionY } }
 }`
 
 export const ROUTE = `query PlusRoute($gymId: ID!, $id: ID!, $userId: ID!) { climb(gymId: $gymId, id: $id) { ${ROUTE_FIELDS} } }`

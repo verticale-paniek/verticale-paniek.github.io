@@ -198,7 +198,25 @@
       <p class="mt-3 border-b border-outline/50 pb-2 text-xs text-muted">
         <span v-if="selectedWalls.length">{{ selectedWalls[0] }}<template v-if="selectedWalls.length > 1"> +{{ selectedWalls.length - 1 }}</template> · </span>{{ filtered.length }} {{ filtered.length === 1 ? 'route' : 'routes' }}
       </p>
-      <ul class="m-0 list-none p-0">
+      <div class="my-3 flex gap-1 rounded-xl border border-outline/50 p-1" role="group" aria-label="Route view">
+        <button
+          v-for="view in (['list', 'map'] as const)"
+          :key="view"
+          class="min-h-11 flex-1 rounded-lg text-sm font-medium capitalize focus-visible:outline-2 focus-visible:outline-accent"
+          :class="state.view === view ? 'bg-accent/15 text-accent' : 'text-muted'"
+          :aria-pressed="state.view === view"
+          @click="state.view = view"
+        >
+          {{ view }}
+        </button>
+      </div>
+      <GymMap
+        v-if="state.view === 'map'"
+        :key="state.gymId"
+        :floorplan-path="gyms.find(g => g.id === state.gymId)?.floorplanPath"
+        :routes="filtered"
+      />
+      <ul v-else class="m-0 list-none p-0">
         <RouteCard
           v-for="route in filtered"
           :key="route.id"
@@ -225,6 +243,7 @@
 
 <script setup lang="ts">
 import RouteCard from '../components/RouteCard.vue'
+import GymMap from '../components/GymMap.vue'
 import TlTabs from '../components/TlTabs.vue'
 import { useTopLogger } from '../useTopLogger'
 import { defaultWallSelection, frenchGrade } from '~/shell/toplogger/domain'

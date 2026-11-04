@@ -3,7 +3,7 @@
 const ENDPOINT = 'https://app.toplogger.nu/graphql'
 
 export const REFRESH = 'mutation authSigninRefreshToken($refreshToken: JWT!) { tokens: authSigninRefreshToken(refreshToken: $refreshToken) { access { token expiresAt } refresh { token expiresAt } } }'
-export const USER = 'query PlusUser { userMe { id fullName gym { id name } gymUserFavorites { gym { id name } } } }'
+export const USER = 'query PlusUser { userMe { id fullName gym { id name floorplanPath } gymUserFavorites { gym { id name floorplanPath } } } }'
 
 export interface Token { token: string, expiresAt: string }
 export interface TokenPair { access: Token, refresh: Token }

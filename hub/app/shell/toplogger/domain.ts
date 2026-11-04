@@ -3,6 +3,7 @@
 export interface Gym {
   id: string
   name: string
+  floorplanPath?: string | null
 }
 
 export interface ClimbUser {
@@ -16,6 +17,8 @@ export interface ClimbUser {
 
 export interface Route {
   id: string
+  positionX?: number | null
+  positionY?: number | null
   grade: number
   name: string | null
   label: string | null

@@ -12,7 +12,7 @@ The module has a bottom tab bar (`/toplogger`):
 
 | Screen | Path | What it shows |
 |---|---|---|
-| Routes | `/toplogger` | Every route at the selected gym with your progress; All / To do / Done, search, filters (grade, hold colour, status, walls). Klimax defaults to sectors 1 to 7. |
+| Routes | `/toplogger` | List by default, with an optional gym map. Both share All / To do / Done, search and filters (grade, hold colour, status, walls). Klimax defaults to sectors 1 to 7. Map markers open route cards; routes sharing a position are grouped. Zoom buttons and scrolling let you explore. Routes without coordinates, or without a working floorplan, remain listed. |
 | Top 10 | `/toplogger/top` | Your best ascents in the last 60, 120 or 180 days, scored as grade (redpoint), +10 (flash) or +15 (onsight), with days left and the average. |
 | Route | `/toplogger/route?id=...` | One route: log Onsight / Flash / Redpoint, Try, Repeat, Unsend, your log with delete, a five-grade vote, route facts, your ascents, community votes, ratings and toppers. |
 | Account | `/toplogger/account` | Connect and disconnect. |
@@ -50,6 +50,8 @@ Everything is cached in `localStorage`, scoped by hub account (so one shared pho
 - **A route screen** fetches its own data every time you open it.
 - **After a log, unsend or delete** the route's progress is updated everywhere at once, and the next visit to the Top 10 refetches.
 - Filters live in memory while the app is open, so they survive opening a route and coming back. They are not saved.
+- The List/Map choice also survives opening a route, but starts as List on a fresh app session. Profile snapshots include each gym's `floorplanPath`; route snapshots include `positionX` and `positionY`. Older snapshots still work as lists until refreshed.
+- The map fetches the public SVG from `uploads.toplogger.nu` only when opened. An allowlist of inert SVG geometry is measured to match TopLogger's coordinate normalization (position multiplied by drawing width/height, without adding the drawing origin), then displayed as a blob image. Map fetch failures leave the routes accessible; offline map availability depends on the browser's HTTP cache.
 - A cached snapshot shows immediately; the fresh answer replaces it. If a refresh fails, the cached data stays on screen with the error.
 
 Preferences (selected gym, Top 10 window) are also in the database, table `toplogger_prefs` (one row per user, owner-only RLS), so they follow you across devices. The device copy makes the app load instantly and still work offline; if the table is unreachable the app just uses the device copy.
