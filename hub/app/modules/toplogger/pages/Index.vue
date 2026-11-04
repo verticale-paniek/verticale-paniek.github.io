@@ -93,20 +93,14 @@
           <strong class="text-sm font-semibold text-text">{{ filtered.length }} {{ filtered.length === 1 ? 'route' : 'routes' }} shown</strong>
           <span>{{ selectedWalls.length === 1 ? selectedWalls[0] : selectedWalls.length ? `${selectedWalls.length} walls selected` : 'All walls' }}<template v-if="grade"> · {{ frenchGrade(Number(grade)) }}</template><template v-if="color"> · {{ color }}</template><template v-if="status"> · {{ statusLabels[status] }}<template v-if="status === 'untried'"> (no attempts)</template></template></span>
         </p>
-        <div class="flex shrink-0 gap-1 rounded-lg border border-outline/50 bg-surface p-0.5" role="group" aria-label="Route view">
-          <button
-            v-for="view in (['list', 'map'] as const)"
-            :key="view"
-            class="grid size-11 place-items-center rounded-md text-base focus-visible:outline-2 focus-visible:outline-accent"
-            :class="state.view === view ? 'bg-accent/15 text-accent' : 'text-muted'"
-            :aria-pressed="state.view === view"
-            :aria-label="view === 'list' ? 'List view' : 'Map view'"
-            :title="view === 'list' ? 'List view' : 'Map view'"
-            @click="state.view = view"
-          >
-            <Icon :name="view === 'list' ? 'lucide:list' : 'lucide:map'" aria-hidden="true" />
-          </button>
-        </div>
+        <button
+          class="flex min-h-11 shrink-0 items-center gap-2 rounded-lg px-3 text-sm font-medium text-muted transition hover:bg-text/5 hover:text-text focus-visible:outline-2 focus-visible:outline-accent"
+          :aria-label="state.view === 'list' ? 'Switch to map view' : 'Switch to list view'"
+          @click="state.view = state.view === 'list' ? 'map' : 'list'"
+        >
+          <Icon :name="state.view === 'list' ? 'lucide:map' : 'lucide:list'" aria-hidden="true" />
+          {{ state.view === 'list' ? 'Map' : 'List' }}
+        </button>
         <button
           ref="filtersButton"
           class="relative grid size-11 shrink-0 place-items-center rounded-lg border border-outline text-lg focus-visible:outline-2 focus-visible:outline-accent"
