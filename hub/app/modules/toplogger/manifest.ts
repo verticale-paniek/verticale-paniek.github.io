@@ -8,6 +8,7 @@ export default {
   routes: [
     { path: '', component: () => import('./pages/Index.vue') },
     { path: 'top', component: () => import('./pages/Top.vue') },
+    { path: 'rankings', component: () => import('./pages/Rankings.vue') },
     { path: 'route', component: () => import('./pages/Route.vue') },
     { path: 'account', component: () => import('./pages/Account.vue') },
   ],

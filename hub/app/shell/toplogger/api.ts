@@ -41,6 +41,11 @@ export interface HistoryResult {
   routes: Route[]
 }
 
+export interface GymRankings {
+  pagination: { total: number, page: number, perPage: number }
+  data: { rank: number, user: { id: string, fullName: string | null }, routesGrade: number | null, tickedVisibleCountRoutes: number | null }[]
+}
+
 /** Home screen payload: the profile, the gym the server chose, and that gym's routes. */
 export interface Home {
   profile: Profile
@@ -56,6 +61,7 @@ export type TopLoggerRequest
     | { action: 'routes', gymId?: string }
     | { action: 'floorplan', path: string }
     | { action: 'history', gymId: string }
+    | { action: 'rankings', gymId: string, metric: 'grade' | 'tops', page: number }
     | { action: 'routeDetail', gymId: string, routeId: string }
     | { action: 'logAscent', gymId: string, routeId: string, tickType: 0 | 1 | 2 | 3, climbedAtDate: string }
     | { action: 'unsend', gymId: string, routeId: string }

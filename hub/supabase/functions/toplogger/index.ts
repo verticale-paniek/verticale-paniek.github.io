@@ -6,6 +6,7 @@ import { callerId, corsHeaders, respond, throttle } from '../_shared/http.ts'
 import { exchangeRefreshToken, graphql, TopLoggerError, USER } from '../_shared/toplogger/graphql.ts'
 import { deleteLog, fetchRouteDetail, fetchRouteLogs, fetchVoteStats, logAscent, optional, unsend, voteGrade } from '../_shared/toplogger/climb.ts'
 import { fetchHistory } from '../_shared/toplogger/history.ts'
+import { fetchRankings } from '../_shared/toplogger/rankings.ts'
 import { fetchFloorplan } from '../_shared/toplogger/floorplan.ts'
 import { type Call, fetchHome, fetchProfile, type Profile } from '../_shared/toplogger/ops.ts'
 import {
@@ -88,7 +89,7 @@ Deno.serve(async (req) => {
     return respond(req, 429, { error: 'Too many requests', code: 'rate_limited' })
   }
 
-  let body: { action?: string, refreshToken?: unknown, gymId?: unknown, routeId?: unknown, tickType?: unknown, climbedAtDate?: unknown, logId?: unknown, grade?: unknown }
+  let body: { action?: string, refreshToken?: unknown, gymId?: unknown, routeId?: unknown, tickType?: unknown, climbedAtDate?: unknown, logId?: unknown, grade?: unknown, path?: unknown, metric?: unknown, page?: unknown }
   try {
     body = await req.json()
   }
@@ -98,6 +99,9 @@ Deno.serve(async (req) => {
 
   try {
     switch (body.action) {
+      case 'rankings':
+        return respond(req, 200, await fetchRankings(callerFor(userId), body.gymId, body.metric, body.page))
+
       case 'floorplan':
         return respond(req, 200, await fetchFloorplan(body.path))
 
