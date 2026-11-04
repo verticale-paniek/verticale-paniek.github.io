@@ -8,8 +8,8 @@
         v-for="tab in tabs"
         :key="tab.to"
         :to="tab.to"
-        class="flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl text-xs font-medium transition focus-visible:outline-2 focus-visible:outline-accent"
-        :class="isCurrent(tab) ? 'bg-accent/15 text-accent' : 'text-muted hover:text-text'"
+        class="flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 border-t-2 text-xs font-medium transition focus-visible:outline-2 focus-visible:outline-accent"
+        :class="isCurrent(tab) ? 'border-accent bg-accent/5 text-accent' : 'border-transparent text-muted hover:text-text'"
         :aria-current="isCurrent(tab) ? 'page' : undefined"
       >
         <Icon

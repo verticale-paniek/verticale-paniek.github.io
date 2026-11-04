@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Route } from '~/shell/toplogger/domain'
-import { floorplanUrl, hasPosition, mapMarkers } from '~/modules/toplogger/utils/map'
+import { clusterMarkers, floorplanUrl, hasPosition, mapMarkers } from '~/modules/toplogger/utils/map'
 
 describe('gym map', () => {
   it('only loads floorplans from the TopLogger uploads host', () => {
@@ -43,5 +43,19 @@ describe('gym map', () => {
     expect(markers).toHaveLength(2)
     expect(markers[0]).toMatchObject({ x: 500, y: 600, routes: routes.slice(0, 2) })
     expect(markers[1]).toMatchObject({ x: 400, y: 500, routes: [routes[2]] })
+  })
+
+  it('keeps fitted targets separated without losing ropes, then separates them on zoom', () => {
+    const markers = Array.from({ length: 12 }, (_, i) => ({ id: String(i), x: i * 20, y: i % 2 * 10, routes: [{ id: String(i) }] as Route[] }))
+    const groups = clusterMarkers(markers, 1)
+    expect(groups.length).toBeLessThan(markers.length)
+    expect(groups.flatMap(group => group.markers.map(marker => marker.id)).sort()).toEqual(markers.map(marker => marker.id).sort())
+    for (const [i, a] of groups.entries()) {
+      for (const b of groups.slice(i + 1)) {
+        expect(Math.abs(a.x - b.x) >= 52 || Math.abs(a.y - b.y) >= 52).toBe(true)
+      }
+    }
+    expect(clusterMarkers(markers, 4)).toHaveLength(markers.length)
+    expect(clusterMarkers([], 1)).toEqual([])
   })
 })

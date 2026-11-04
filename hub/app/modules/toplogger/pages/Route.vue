@@ -46,12 +46,12 @@
             <span class="sr-only">{{ frenchGrade(route.grade) }} · </span>{{ route.name || (route.label ? `Rope ${route.label}` : 'Route') }}
           </h1>
           <span
-            class="mt-2 inline-block rounded-full px-2.5 py-1 text-xs font-medium"
+            class="mt-2 inline-block rounded-md px-2.5 py-1 text-xs font-medium"
             :class="topped ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300' : 'bg-bg text-muted'"
           >{{ topped ? ascentLabel(route.climbUser?.tickType) : route.climbUser?.totalTries ? 'Attempted' : 'To do' }}</span>
           <span
             v-if="isNewRoute(route.inAt)"
-            class="ml-2 inline-block rounded-full bg-accent/15 px-2 py-0.5 text-xs font-semibold text-accent"
+            class="ml-2 inline-block rounded-md bg-accent/15 px-2 py-0.5 text-xs font-semibold text-accent"
           >New</span>
         </div>
       </header>
@@ -75,7 +75,7 @@
             <button
               v-for="type in [3, 2, 1] as const"
               :key="type"
-              class="flex min-h-12 flex-1 items-center justify-center gap-1.5 rounded-xl bg-accent px-1.5 text-sm font-semibold text-bg transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50"
+              class="flex min-h-12 flex-1 items-center justify-center gap-1.5 rounded-lg border border-accent/50 bg-accent/10 px-1.5 text-sm font-semibold text-accent transition hover:bg-accent/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50"
               :class="{ 'ring-2 ring-accent ring-offset-2 ring-offset-surface': route.climbUser?.tickType === type }"
               :aria-pressed="route.climbUser?.tickType === type"
               :aria-busy="detail.action === `ascent:${type}`"

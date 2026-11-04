@@ -2,7 +2,7 @@
   <li class="mt-2">
     <NuxtLink
       :to="{ path: '/toplogger/route', query: { id: route.id } }"
-      class="flex min-h-20 items-center gap-3 rounded-xl border border-outline/50 bg-surface p-3 text-text transition hover:border-accent/50 hover:bg-accent/5 focus-visible:outline-2 focus-visible:outline-accent"
+      class="flex min-h-20 items-center gap-3 rounded-xl border border-outline bg-surface p-3 text-text transition hover:border-accent/50 hover:bg-accent/5 focus-visible:outline-2 focus-visible:outline-accent"
     >
       <span
         v-if="rank"
@@ -15,7 +15,7 @@
       <span class="flex min-w-0 flex-1 flex-col gap-0.5">
         <span class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-semibold">
           <span class="break-words">{{ route.name || (route.label ? `Rope ${route.label}` : route.wall?.nameLoc || 'Route') }}</span>
-          <span v-if="isNew" class="rounded-full bg-accent/15 px-2 py-0.5 text-xs font-medium text-accent">New</span>
+          <span v-if="isNew" class="rounded-md bg-accent/15 px-2 py-0.5 text-xs font-medium text-accent">New</span>
         </span>
         <span class="break-words text-sm text-muted">
           {{ route.wall?.nameLoc || 'Wall unknown' }} · {{ route.holdColor?.nameLoc || 'Color unknown' }}
@@ -33,7 +33,7 @@
         class="shrink-0 text-xs tabular-nums text-muted"
       ><span aria-hidden="true">×{{ tops }}</span><span class="sr-only">{{ tops }} ascents</span></span>
       <span
-        class="grid size-9 shrink-0 place-items-center rounded-full text-lg"
+        class="grid size-9 shrink-0 place-items-center rounded-lg text-lg"
         :class="done ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300' : attempted ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400' : 'text-muted'"
         :title="done ? ascentLabel(tickType) : attempted ? 'Attempted' : 'To do'"
       >

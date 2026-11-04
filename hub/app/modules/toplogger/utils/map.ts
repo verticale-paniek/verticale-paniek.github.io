@@ -43,6 +43,30 @@ export function mapMarkers(routes: Route[], drawing: MapRect) {
   return [...groups.entries()].map(([id, marker]) => ({ id, routes: marker.routes, x: marker.x / marker.routes.length, y: marker.y / marker.routes.length }))
 }
 
+/** Merge colliding 44px targets with an 8px gap; zooming naturally separates them. */
+export function clusterMarkers(markers: ReturnType<typeof mapMarkers>, scale: number) {
+  const groups = markers.map(marker => ({ x: marker.x, y: marker.y, markers: [marker] }))
+  let merged = true
+  while (merged) {
+    merged = false
+    search: for (let i = 0; i < groups.length; i++) {
+      for (let j = i + 1; j < groups.length; j++) {
+        const a = groups[i]!
+        const b = groups[j]!
+        if (Math.abs(a.x - b.x) * scale < 52 && Math.abs(a.y - b.y) * scale < 52) {
+          a.markers.push(...b.markers)
+          a.x = a.markers.reduce((sum, marker) => sum + marker.x, 0) / a.markers.length
+          a.y = a.markers.reduce((sum, marker) => sum + marker.y, 0) / a.markers.length
+          groups.splice(j, 1)
+          merged = true
+          break search
+        }
+      }
+    }
+  }
+  return groups
+}
+
 /** Only inert SVG geometry enters the measuring DOM; the visible drawing is an image. */
 export function readDrawing(source: string): { url: string, rect: MapRect } {
   const documentSvg = new DOMParser().parseFromString(source, 'image/svg+xml')
