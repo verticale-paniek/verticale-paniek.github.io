@@ -86,13 +86,14 @@
       </div>
 
       <div class="mt-3 flex gap-2">
-        <label class="flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-xl border border-outline bg-bg px-3">
+        <label class="flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-xl border border-outline bg-bg px-3 focus-within:outline-2 focus-within:outline-accent">
           <Icon
             name="lucide:search"
             class="shrink-0 text-muted"
             aria-hidden="true"
           />
           <input
+            ref="searchInput"
             v-model="search"
             class="w-full min-w-0 bg-transparent py-2 text-base outline-none"
             type="search"
@@ -101,6 +102,7 @@
           >
         </label>
         <button
+          ref="filtersButton"
           class="flex min-h-11 items-center gap-1.5 rounded-xl border border-outline px-3 text-sm focus-visible:outline-2 focus-visible:outline-accent"
           :aria-expanded="showFilters"
           aria-controls="filters"
@@ -116,11 +118,25 @@
         </button>
       </div>
 
+      <p class="mt-3 flex flex-wrap gap-x-3 gap-y-1 border-b border-outline/50 pb-2 text-sm text-muted" role="status">
+        <strong class="font-medium text-text">{{ filtered.length }} {{ filtered.length === 1 ? 'route' : 'routes' }}</strong>
+        <span v-if="grade">Grade {{ frenchGrade(Number(grade)) }}</span>
+        <span v-if="color">{{ color }}</span>
+        <span v-if="status">{{ statusLabels[status] }}<template v-if="status === 'untried'"> (no attempts)</template></span>
+        <span v-if="selectedWalls.length">{{ selectedWalls.length === 1 ? selectedWalls[0] : `${selectedWalls.length} walls selected` }}</span>
+      </p>
+
       <div
         v-if="showFilters"
         id="filters"
         class="mt-3 grid grid-cols-2 gap-3 rounded-xl border border-outline/50 bg-surface p-3 text-sm"
       >
+        <button
+          class="col-span-2 min-h-11 rounded-lg bg-accent px-3 font-semibold text-bg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+          @click="showFilters = false; filtersButton?.focus()"
+        >
+          Show {{ filtered.length }} {{ filtered.length === 1 ? 'route' : 'routes' }}
+        </button>
         <label class="grid gap-1.5 font-semibold">Grade
           <select
             v-model="grade"
@@ -153,40 +169,42 @@
             class="min-h-11 rounded-lg border border-outline bg-bg px-2 font-normal"
           >
             <option value="">Any status</option>
-            <option value="untried">To try</option>
-            <option value="attempted">Attempted</option>
-            <option value="todo">Not done</option>
-            <option value="topped">Done</option>
+            <option v-for="(label, value) in statusLabels" :key="value" :value="value">{{ label }}</option>
           </select>
         </label>
-        <fieldset class="col-span-2 m-0 min-w-0 border-0 p-0">
-          <legend class="font-semibold">
-            Walls
-          </legend>
-          <button
-            class="min-h-11 text-accent"
-            :aria-pressed="!selectedWalls.length"
-            @click="allWalls"
-          >
-            All walls
-          </button>
-          <div class="flex flex-wrap gap-x-4">
-            <label
-              v-for="value in walls"
-              :key="value"
-              class="flex min-h-11 items-center gap-2"
+        <details class="col-span-2 min-w-0">
+          <summary class="min-h-11 cursor-pointer content-center rounded-lg font-semibold focus-visible:outline-2 focus-visible:outline-accent">
+            Walls · {{ selectedWalls.length ? `${selectedWalls.length} selected` : 'All walls' }}
+          </summary>
+          <fieldset class="m-0 min-w-0 border-0 p-0">
+            <legend class="sr-only">
+              Walls
+            </legend>
+            <button
+              class="min-h-11 text-accent"
+              :aria-pressed="!selectedWalls.length"
+              @click="allWalls"
             >
-              <input
-                v-model="selectedWalls"
-                class="size-4.5 accent-accent"
-                type="checkbox"
-                :value="value"
-                @change="filters.wallsChosen = true"
+              All walls
+            </button>
+            <div class="flex flex-wrap gap-x-4">
+              <label
+                v-for="value in walls"
+                :key="value"
+                class="flex min-h-11 items-center gap-2"
               >
-              {{ value }}
-            </label>
-          </div>
-        </fieldset>
+                <input
+                  v-model="selectedWalls"
+                  class="size-4.5 accent-accent"
+                  type="checkbox"
+                  :value="value"
+                  @change="filters.wallsChosen = true"
+                >
+                {{ value }}
+              </label>
+            </div>
+          </fieldset>
+        </details>
         <button
           class="col-span-2 min-h-11 text-left text-accent"
           @click="resetAll"
@@ -195,9 +213,6 @@
         </button>
       </div>
 
-      <p class="mt-3 border-b border-outline/50 pb-2 text-xs text-muted">
-        <span v-if="selectedWalls.length">{{ selectedWalls[0] }}<template v-if="selectedWalls.length > 1"> +{{ selectedWalls.length - 1 }}</template> · </span>{{ filtered.length }} {{ filtered.length === 1 ? 'route' : 'routes' }}
-      </p>
       <div class="my-3 flex gap-1 rounded-xl border border-outline/50 p-1" role="group" aria-label="Route view">
         <button
           v-for="view in (['list', 'map'] as const)"
@@ -224,13 +239,30 @@
           :route="route"
         />
       </ul>
-      <p
+      <div
         v-if="!filtered.length"
         class="py-8 text-center text-muted"
-        role="status"
       >
-        {{ state.busy ? 'Fetching the latest from TopLogger…' : search || filterCount ? 'No matching routes. Try a broader search or clear your filters.' : 'No routes to show.' }}
-      </p>
+        <p role="status">
+          {{ state.busy ? 'Fetching the latest from TopLogger…' : search || filterCount ? 'No matching routes. Try a broader search or clear your filters.' : 'No routes to show.' }}
+        </p>
+        <div v-if="!state.busy" class="mt-3 flex flex-wrap justify-center gap-2">
+          <button
+            v-if="search"
+            class="min-h-11 rounded-xl border border-outline px-4 text-sm font-semibold text-text focus-visible:outline-2 focus-visible:outline-accent"
+            @click="search = ''; searchInput?.focus()"
+          >
+            Clear search
+          </button>
+          <button
+            v-if="filterCount"
+            class="min-h-11 rounded-xl border border-outline px-4 text-sm font-semibold text-text focus-visible:outline-2 focus-visible:outline-accent"
+            @click="resetAll(); searchInput?.focus()"
+          >
+            Reset search and filters
+          </button>
+        </div>
+      </div>
 
       <p
         class="mt-6 text-xs text-muted"
@@ -252,6 +284,9 @@ import { defaultWallSelection, frenchGrade } from '~/shell/toplogger/domain'
 const { state, filters, gyms, activeRoutes, load, refresh, selectGym, resetFilters, mapNavigation } = useTopLogger()
 
 const { search, showFilters, grade, color, status, walls: selectedWalls } = toRefs(filters)
+const searchInput = useTemplateRef<HTMLInputElement>('searchInput')
+const filtersButton = useTemplateRef<HTMLButtonElement>('filtersButton')
+const statusLabels: Record<string, string> = { untried: 'To try', attempted: 'Attempted', todo: 'Not done', topped: 'Done' }
 
 const sorted = computed(() => [...activeRoutes.value].sort((a, b) =>
   a.grade - b.grade

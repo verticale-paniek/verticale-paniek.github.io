@@ -12,7 +12,7 @@
         v-model="session.name"
         type="text"
         maxlength="40"
-        class="mt-1 block min-h-11 w-full rounded-xl border border-outline bg-bg px-3 text-sm text-text"
+        class="mt-1 block min-h-11 w-full rounded-xl border border-outline bg-bg px-3 text-sm text-text focus-visible:outline-2 focus-visible:outline-accent"
       >
     </label>
 
@@ -28,7 +28,7 @@
           @click="openBlock(item.key)"
         >
           <span class="block text-sm font-medium">{{ item.title }}</span>
-          <span class="block truncate text-xs text-muted">{{ describeBlock(item) }}</span>
+          <span class="block break-words text-sm text-muted">{{ describeBlock(item) }}</span>
         </NuxtLink>
         <button
           class="grid size-11 place-items-center rounded-xl text-muted transition hover:bg-text/5 hover:text-text focus-visible:outline-2 focus-visible:outline-accent disabled:opacity-30"
@@ -75,7 +75,7 @@
 
     <label class="mt-4 block text-xs text-muted">Add a block
       <select
-        class="mt-1 block min-h-11 w-full rounded-xl border border-outline bg-bg px-3 text-sm text-text"
+        class="mt-1 block min-h-11 w-full rounded-xl border border-outline bg-bg px-3 text-sm text-text focus-visible:outline-2 focus-visible:outline-accent"
         value=""
         @change="onAdd($event.target as HTMLSelectElement)"
       >
@@ -90,7 +90,7 @@
 
     <NuxtLink
       to="/training/manage"
-      class="mt-6 flex min-h-12 w-full items-center justify-center rounded-xl bg-accent px-4 font-semibold text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+      class="mt-6 flex min-h-12 w-full items-center justify-center rounded-xl bg-accent px-4 font-semibold text-bg transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
     >
       Done
     </NuxtLink>

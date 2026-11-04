@@ -27,7 +27,7 @@
     <div class="mt-3 flex gap-2">
       <button
         class="min-h-12 flex-1 rounded-xl px-4 font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-        :class="active ? 'bg-white/90 text-black' : 'bg-accent text-white'"
+        :class="active ? 'bg-white/90 text-black' : 'bg-accent text-bg'"
         @click="running ? pause() : start()"
       >
         {{ running ? 'Pause' : finished ? 'Again' : elapsed > 0 ? 'Resume' : 'Start' }}

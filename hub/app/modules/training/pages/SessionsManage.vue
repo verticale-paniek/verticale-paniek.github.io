@@ -27,7 +27,7 @@
           @click="openSession(item.key)"
         >
           <span class="block text-sm font-medium">{{ item.name }}</span>
-          <span class="block truncate text-xs text-muted">{{ summary(item) }}</span>
+          <span class="block break-words text-sm text-muted">{{ summary(item) }}</span>
         </NuxtLink>
         <NuxtLink
           to="/training/edit"
@@ -64,7 +64,7 @@
     </ul>
 
     <button
-      class="mt-2 flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-accent px-4 font-semibold text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+      class="mt-2 flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-accent px-4 font-semibold text-bg transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
       @click="onNew"
     >
       <Icon

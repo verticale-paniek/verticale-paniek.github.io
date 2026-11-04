@@ -9,7 +9,7 @@
         v-model="block.title"
         type="text"
         maxlength="40"
-        class="mt-1 block min-h-11 w-full rounded-xl border border-outline bg-bg px-3 text-sm text-text"
+        class="mt-1 block min-h-11 w-full rounded-xl border border-outline bg-bg px-3 text-sm text-text focus-visible:outline-2 focus-visible:outline-accent"
       >
     </label>
 
@@ -46,7 +46,7 @@
         class="mt-3 block text-xs text-muted"
       >Add an option
         <select
-          class="mt-1 block min-h-11 w-full rounded-xl border border-outline bg-bg px-3 text-sm text-text"
+          class="mt-1 block min-h-11 w-full rounded-xl border border-outline bg-bg px-3 text-sm text-text focus-visible:outline-2 focus-visible:outline-accent"
           value=""
           @change="onAdd($event.target as HTMLSelectElement)"
         >
@@ -63,7 +63,7 @@
         <textarea
           v-model="block.note"
           rows="4"
-          class="mt-1 block w-full rounded-xl border border-outline bg-bg p-3 text-sm text-text"
+          class="mt-1 block w-full rounded-xl border border-outline bg-bg p-3 text-sm text-text focus-visible:outline-2 focus-visible:outline-accent"
           placeholder="Anything else for this block"
         />
       </label>
@@ -130,7 +130,7 @@
           </div>
           <label class="mt-2 block text-xs text-muted">Timer
             <select
-              class="mt-1 block min-h-11 w-full rounded-xl border border-outline bg-bg px-3 text-sm text-text"
+              class="mt-1 block min-h-11 w-full rounded-xl border border-outline bg-bg px-3 text-sm text-text focus-visible:outline-2 focus-visible:outline-accent"
               :value="slot.profileId"
               @change="setProfile(slot, ($event.target as HTMLSelectElement).value)"
             >
@@ -144,7 +144,7 @@
           <label class="mt-2 block text-xs text-muted">Exercise
             <select
               v-model="slot.option"
-              class="mt-1 block min-h-11 w-full rounded-xl border border-outline bg-bg px-3 text-sm text-text"
+              class="mt-1 block min-h-11 w-full rounded-xl border border-outline bg-bg px-3 text-sm text-text focus-visible:outline-2 focus-visible:outline-accent"
             >
               <option
                 v-for="option in getProfile(slot.profileId)?.options"
@@ -179,7 +179,7 @@
 
     <NuxtLink
       to="/training/edit"
-      class="mt-4 flex min-h-12 w-full items-center justify-center rounded-xl bg-accent px-4 font-semibold text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+      class="mt-4 flex min-h-12 w-full items-center justify-center rounded-xl bg-accent px-4 font-semibold text-bg transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
     >
       Done
     </NuxtLink>

@@ -17,7 +17,7 @@
       <strong class="w-10 shrink-0 text-lg tabular-nums">{{ frenchGrade(route.grade) }}</strong>
       <span class="flex min-w-0 flex-1 flex-col gap-0.5">
         <span class="break-words text-sm font-semibold">{{ route.name || (route.label ? `Rope ${route.label}` : route.wall?.nameLoc || 'Route') }}</span>
-        <span class="break-words text-xs text-muted">
+        <span class="break-words text-sm text-muted">
           {{ route.wall?.nameLoc || 'Wall unknown' }} · {{ route.holdColor?.nameLoc || 'Color unknown' }}<template v-if="route.climbUser?.totalTries"> · {{ route.climbUser.totalTries }} {{ route.climbUser.totalTries === 1 ? 'attempt' : 'attempts' }}</template>
         </span>
         <span

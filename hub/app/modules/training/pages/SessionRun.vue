@@ -12,7 +12,10 @@
       class="my-6 text-muted"
       role="status"
     >
-      This session is empty. Add blocks under Edit sessions.
+      This session is empty.
+      <NuxtLink to="/training/edit" class="inline-flex min-h-11 items-center rounded-lg px-2 font-semibold text-accent underline focus-visible:outline-2 focus-visible:outline-accent">
+        Add blocks
+      </NuxtLink>
     </p>
 
     <ol class="m-0 mt-4 list-none p-0">
@@ -56,7 +59,10 @@
               v-if="!item.choices.length && !item.note.trim()"
               class="text-sm text-muted"
             >
-              Nothing chosen. Pick something under Edit sessions.
+              Nothing chosen.
+              <NuxtLink to="/training/block-edit" class="inline-flex min-h-11 items-center rounded-lg px-2 font-semibold text-accent underline focus-visible:outline-2 focus-visible:outline-accent" @click="openBlock(item.key)">
+                Choose options
+              </NuxtLink>
             </p>
             <ul
               v-if="item.choices.length"
@@ -83,7 +89,10 @@
               v-if="!item.slots.length"
               class="text-sm text-muted"
             >
-              The circuit is empty. Add exercises under Edit sessions.
+              The circuit is empty.
+              <NuxtLink to="/training/block-edit" class="inline-flex min-h-11 items-center rounded-lg px-2 font-semibold text-accent underline focus-visible:outline-2 focus-visible:outline-accent" @click="openBlock(item.key)">
+                Add exercises
+              </NuxtLink>
             </p>
             <ol class="m-0 list-none p-0">
               <li
@@ -149,7 +158,7 @@ import TimerPanel, { type Chain } from '../components/TimerPanel.vue'
 import { families, getProfile, getTimer, type Slot } from '../plan'
 import { describeBlock, useSession, type Block } from '../useSession'
 
-const { session, clearTicks } = useSession()
+const { session, clearTicks, openBlock } = useSession()
 
 /** The slot whose timer is open; one at a time in the whole session, so only one timer runs. */
 const open = ref<number | null>(null)

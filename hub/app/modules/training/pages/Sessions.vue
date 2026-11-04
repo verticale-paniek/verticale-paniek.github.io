@@ -24,7 +24,10 @@
       class="my-6 text-muted"
       role="status"
     >
-      No sessions yet. Make one under Edit sessions.
+      No sessions yet.
+      <NuxtLink to="/training/manage" class="inline-flex min-h-11 items-center rounded-lg px-2 font-semibold text-accent underline focus-visible:outline-2 focus-visible:outline-accent">
+        Create a session
+      </NuxtLink>
     </p>
 
     <ul class="m-0 mt-4 list-none p-0">
@@ -40,7 +43,7 @@
         >
           <span class="min-w-0 flex-1">
             <span class="block text-sm font-medium">{{ item.name }}</span>
-            <span class="block truncate text-xs text-muted">{{ summary(item) }}</span>
+            <span class="block break-words text-sm text-muted">{{ summary(item) }}</span>
           </span>
           <Icon
             name="lucide:chevron-right"

@@ -11,7 +11,7 @@
     </p>
     <template v-if="drawing">
       <div class="mb-2 flex items-center gap-2">
-        <p class="flex-1 text-xs text-muted">
+        <p class="flex-1 text-sm text-muted">
           Drag to move. Pinch or scroll to zoom. Tap a grade for route details.
         </p>
         <button class="size-11 shrink-0 rounded-lg border border-outline" aria-label="Zoom out" @click="zoomAtCenter(1 / 1.4)">
@@ -24,6 +24,9 @@
           Fit
         </button>
       </div>
+      <p class="mb-2 text-sm text-muted">
+        Keyboard: arrow keys pan, +/− zoom, Home fits the map.
+      </p>
       <div
         ref="viewport"
         class="relative h-[60vh] min-h-80 max-h-[600px] touch-none select-none overflow-hidden rounded-xl border border-outline bg-white focus-visible:outline-2 focus-visible:outline-accent"
