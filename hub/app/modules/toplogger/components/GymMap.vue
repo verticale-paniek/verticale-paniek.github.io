@@ -10,28 +10,6 @@
       Loading gym map…
     </p>
     <template v-if="drawing">
-      <div class="mb-2 flex items-center gap-2 rounded-xl border border-outline/50 bg-surface p-2">
-        <p class="min-w-0 flex-1 px-1 text-sm font-semibold">
-          Select a route
-        </p>
-        <details class="relative shrink-0 text-sm text-muted">
-          <summary class="grid size-11 cursor-pointer list-none place-items-center rounded-lg hover:bg-text/5 focus-visible:outline-2 focus-visible:outline-accent [&::-webkit-details-marker]:hidden" aria-label="Map help">
-            ?
-          </summary>
-          <p class="absolute left-1/2 top-full z-20 mt-2 w-56 -translate-x-1/2 rounded-xl border border-outline bg-surface p-3 leading-relaxed shadow-lg">
-            Each marker is one route: its grade and hold color identify it, and a check marks a completed route. Zoom in to see closely spaced routes. Drag to move; pinch or scroll to zoom. Keyboard: arrow keys pan, +/− zoom, Home fits the map.
-          </p>
-        </details>
-        <button class="size-11 shrink-0 rounded-lg border border-outline text-lg hover:bg-text/5 focus-visible:outline-2 focus-visible:outline-accent" aria-label="Zoom out" @click="zoomAtCenter(1 / 1.4)">
-          −
-        </button>
-        <button class="size-11 shrink-0 rounded-lg border border-outline text-lg hover:bg-text/5 focus-visible:outline-2 focus-visible:outline-accent" aria-label="Zoom in" @click="zoomAtCenter(1.4)">
-          +
-        </button>
-        <button class="min-h-11 shrink-0 rounded-lg border border-outline px-3 text-sm hover:bg-text/5 focus-visible:outline-2 focus-visible:outline-accent" @click="fit">
-          Fit
-        </button>
-      </div>
       <div
         ref="viewport"
         class="relative h-[calc(100dvh-28rem)] min-h-64 max-h-[600px] touch-none select-none overflow-hidden rounded-xl border border-outline bg-white focus-visible:outline-2 focus-visible:outline-accent"
