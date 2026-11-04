@@ -212,7 +212,8 @@
       </div>
       <GymMap
         v-if="state.view === 'map'"
-        :key="state.gymId"
+        :key="`${state.gymId}:${gyms.find(g => g.id === state.gymId)?.floorplanPath ?? ''}`"
+        :navigation="mapNavigation"
         :floorplan-path="gyms.find(g => g.id === state.gymId)?.floorplanPath"
         :routes="filtered"
       />
@@ -248,7 +249,7 @@ import TlTabs from '../components/TlTabs.vue'
 import { useTopLogger } from '../useTopLogger'
 import { defaultWallSelection, frenchGrade } from '~/shell/toplogger/domain'
 
-const { state, filters, gyms, activeRoutes, load, refresh, selectGym, resetFilters } = useTopLogger()
+const { state, filters, gyms, activeRoutes, load, refresh, selectGym, resetFilters, mapNavigation } = useTopLogger()
 
 const { search, showFilters, grade, color, status, walls: selectedWalls } = toRefs(filters)
 

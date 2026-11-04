@@ -9,6 +9,7 @@ export function mapNavigation() {
   let start: Point = { x: 0, y: 0 }
   let minimum = 0.1
   let maximum = 10
+  let viewport = { width: 0, height: 0 }
 
   function zoom(factor: number, anchor: Point, destination = anchor) {
     const scale = Math.max(minimum, Math.min(maximum, view.scale * factor))
@@ -25,7 +26,28 @@ export function mapNavigation() {
     const scale = Math.min(width / rect.width, height / rect.height)
     minimum = scale / 2
     maximum = scale * 16
+    viewport = { width, height }
     Object.assign(view, { scale, x: (width - rect.width * scale) / 2 - rect.x * scale, y: (height - rect.height * scale) / 2 - rect.y * scale })
+  }
+
+  /** Returning from details (or updating route progress) must not fit the map again. */
+  function resize(rect: { x: number, y: number, width: number, height: number }, width: number, height: number) {
+    if (width <= 0 || height <= 0) {
+      return
+    }
+    if (!viewport.width) {
+      fit(rect, width, height)
+      return
+    }
+    view.x += (width - viewport.width) / 2
+    view.y += (height - viewport.height) / 2
+    viewport = { width, height }
+  }
+
+  function release() {
+    pointers.clear()
+    view.dragging = false
+    view.moved = false
   }
 
   function down(id: number, point: Point) {
@@ -72,5 +94,5 @@ export function mapNavigation() {
     view.dragging = pointers.size > 0
   }
 
-  return { view, fit, zoom, down, move, up }
+  return { view, fit, resize, release, zoom, down, move, up }
 }

@@ -52,6 +52,7 @@ Everything is cached in `localStorage`, scoped by hub account (so one shared pho
 - **After a log, unsend or delete** the route's progress is updated everywhere at once, and the next visit to the Top 10 refetches.
 - Filters live in memory while the app is open, so they survive opening a route and coming back. They are not saved.
 - The List/Map choice also survives opening a route, but starts as List on a fresh app session. Profile snapshots include each gym's `floorplanPath`; route snapshots include `positionX` and `positionY`. Older snapshots still work as lists until refreshed.
+- Map zoom and position stay in memory per gym and floorplan, including when returning from details, logging a route, or switching between List and Map. Resizing keeps the same map center; Fit explicitly resets the view. A fresh app session or account reset clears the saved map views.
 - The map fetches the public SVG through the authenticated `floorplan` action only when opened: `uploads.toplogger.nu` does not permit browser reads from our origin. An allowlist of inert SVG geometry is measured to match TopLogger's coordinate normalization (position multiplied by drawing width/height, without adding the drawing origin), then displayed as a blob image. Map fetch failures leave the routes accessible; opening a map requires a network connection.
 - A cached snapshot shows immediately; the fresh answer replaces it. If a refresh fails, the cached data stays on screen with the error.
 

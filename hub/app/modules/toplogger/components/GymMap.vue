@@ -83,16 +83,16 @@ import RouteCard from './RouteCard.vue'
 import { ascentLabel, colorValue, frenchGrade, type Route } from '~/shell/toplogger/domain'
 import { floorplanUrl, hasPosition, mapMarkers, markerTextColor, readDrawing } from '../utils/map'
 import { toploggerCall } from '~/shell/toplogger/api'
-import { mapNavigation } from '../utils/mapNavigation'
+import type { mapNavigation } from '../utils/mapNavigation'
 
-const props = defineProps<{ floorplanPath?: string | null, routes: Route[] }>()
+const props = defineProps<{ floorplanPath?: string | null, routes: Route[], navigation: ReturnType<typeof mapNavigation> }>()
 const supabase = useSupabase()
 const sourceUrl = computed(() => floorplanUrl(props.floorplanPath))
 const drawing = shallowRef<ReturnType<typeof readDrawing> | null>(null)
 const error = ref('')
 const viewport = useTemplateRef('viewport')
 const { width, height } = useElementSize(viewport)
-const navigation = mapNavigation()
+const navigation = props.navigation
 const { view } = navigation
 const markers = computed(() => drawing.value ? mapMarkers(props.routes, drawing.value.rect) : [])
 const routeMarkers = computed(() => markers.value.flatMap(marker => marker.routes.map((route, index) => ({
@@ -112,7 +112,11 @@ const frame = computed(() => {
 function fit() {
   navigation.fit(frame.value, width.value, height.value)
 }
-watch(() => [width.value, height.value, frame.value.x, frame.value.y, frame.value.width, frame.value.height], fit)
+watch(() => [width.value, height.value, frame.value.x, frame.value.y, frame.value.width, frame.value.height], () => {
+  if (drawing.value) {
+    navigation.resize(frame.value, width.value, height.value)
+  }
+})
 function point(event: { clientX: number, clientY: number }) {
   const rect = viewport.value!.getBoundingClientRect()
   return { x: event.clientX - rect.left, y: event.clientY - rect.top }
@@ -198,6 +202,7 @@ async function loadDrawing() {
 }
 watch(sourceUrl, loadDrawing, { immediate: true })
 onBeforeUnmount(() => {
+  navigation.release()
   controller?.abort()
   clearDrawing()
 })

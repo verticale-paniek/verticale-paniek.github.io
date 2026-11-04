@@ -7,10 +7,13 @@ import {
   type HistoryResult, type Home, type Profile, type RouteDetail, type VoteResult, type WriteResult,
 } from '~/shell/toplogger/api'
 import { cacheKey, clearCache, readCache, writeCache } from './utils/cache'
+import { mapNavigation as createMapNavigation } from './utils/mapNavigation'
 import { dayLabel, isActive, topTen, visibleLogs, type Ascent, type ClimbUser, type Community, type Route, type RouteLog } from '~/shell/toplogger/domain'
 import { canRank, validAscents } from '~/shell/toplogger/history'
 
 interface RouteSnapshot { gymId: string, routes: Route[] }
+
+const mapViews = new Map<string, ReturnType<typeof createMapNavigation>>()
 
 const state = reactive({
   account: '',
@@ -85,6 +88,7 @@ function save(kind: string, scope: string, data: unknown): string {
 }
 
 function loadCached(account: string): void {
+  mapViews.clear()
   state.view = 'list'
   Object.assign(state, { account, profile: null, gymId: '', routes: [], syncedAt: '', error: '', needsConnect: false, cacheWarning: false, entered: false })
   const profile = readCache<Profile>(cacheKey(account, '_', 'profile'))
@@ -215,6 +219,14 @@ export function useTopLogger() {
     const p = state.profile
     const all = [...(p?.gym ? [p.gym] : []), ...(p?.gymUserFavorites ?? []).map(f => f.gym)]
     return [...new Map(all.map(g => [g.id, g])).values()]
+  })
+  const mapNavigation = computed(() => {
+    const path = gyms.value.find(gym => gym.id === state.gymId)?.floorplanPath ?? ''
+    const key = `${state.gymId}:${path}`
+    if (!mapViews.has(key)) {
+      mapViews.set(key, createMapNavigation())
+    }
+    return mapViews.get(key)!
   })
   // Deduped by id as well: list keys must be unique, and older cached snapshots may hold duplicates.
   const activeRoutes = computed(() => [...new Map(state.routes.filter(r => isActive(r)).map(r => [r.id, r])).values()])
@@ -522,7 +534,7 @@ export function useTopLogger() {
   const rankable = computed(() => top.loaded && canRank(top.history, scoringRoutes(), state.gymId))
 
   return {
-    state, filters, detail, top, gyms, activeRoutes, ranked, rankable,
+    state, filters, detail, top, gyms, activeRoutes, ranked, rankable, mapNavigation,
     load, refresh: () => refresh(supabase), selectGym, reset, resetFilters,
     enterTop, refreshTop, setDays,
     openRoute, submitAscent, unsend, deleteLog, voteGrade,
