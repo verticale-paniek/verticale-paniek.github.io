@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   averageLabel, colorValue, dayLabel, daysLeft, daysLeftLabel, defaultWallSelection, frenchGrade, gradeChoices, isActive,
-  logKind, score, topCount, topTen, visibleLogs,
+  isNewRoute, logKind, score, topCount, topTen, visibleLogs,
   type Ascent, type Route, type RouteLog,
 } from '~/shell/toplogger/domain'
 
@@ -32,6 +32,15 @@ describe('grades', () => {
 })
 
 describe('walls and routes', () => {
+  it('uses the same fourteen-day window for New badges and the New filter', () => {
+    const today = new Date('2026-11-04T12:00:00Z')
+    expect(isNewRoute('2026-11-04T12:00:00Z', today)).toBe(true)
+    expect(isNewRoute('2026-10-21T12:00:01Z', today)).toBe(true)
+    for (const value of ['2026-10-21T12:00:00Z', '2026-11-05T12:00:00Z', 'invalid', null]) {
+      expect(isNewRoute(value, today)).toBe(false)
+    }
+  })
+
   it('defaults Klimax to sectors 1–7 and other gyms to all walls', () => {
     const walls = ['Sector 1', 'sector 2', 'Sector 3', 'Sector 4', 'Sector 5', 'Sector 6', 'Sector 7', 'Sector 8', 'Sector 10', 'Binnen 1', 'Buiten 1']
     expect(defaultWallSelection('Klimax', walls)).toEqual(walls.slice(0, 7))

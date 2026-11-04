@@ -28,43 +28,11 @@ export interface MapRect { x: number, y: number, width: number, height: number }
 
 /** TopLogger normalizes by drawing size, without subtracting its origin. Values can exceed 1. */
 export function mapMarkers(routes: Route[], drawing: MapRect) {
-  const groups = new Map<string, { x: number, y: number, routes: Route[] }>()
-  for (const route of routes.filter(hasPosition)) {
-    // Routes on one rope can have slightly different coordinates in TopLogger.
-    const key = route.label
-      ? JSON.stringify([route.wall?.nameLoc, route.label])
-      : `${route.positionX},${route.positionY}`
-    const group = groups.get(key) ?? { x: 0, y: 0, routes: [] }
-    group.x += route.positionX * drawing.width
-    group.y += route.positionY * drawing.height
-    group.routes.push(route)
-    groups.set(key, group)
-  }
-  return [...groups.entries()].map(([id, marker]) => ({ id, routes: marker.routes, x: marker.x / marker.routes.length, y: marker.y / marker.routes.length }))
-}
-
-/** Merge colliding 44px targets with an 8px gap; zooming naturally separates them. */
-export function clusterMarkers(markers: ReturnType<typeof mapMarkers>, scale: number) {
-  const groups = markers.map(marker => ({ x: marker.x, y: marker.y, markers: [marker] }))
-  let merged = true
-  while (merged) {
-    merged = false
-    search: for (let i = 0; i < groups.length; i++) {
-      for (let j = i + 1; j < groups.length; j++) {
-        const a = groups[i]!
-        const b = groups[j]!
-        if (Math.abs(a.x - b.x) * scale < 52 && Math.abs(a.y - b.y) * scale < 52) {
-          a.markers.push(...b.markers)
-          a.x = a.markers.reduce((sum, marker) => sum + marker.x, 0) / a.markers.length
-          a.y = a.markers.reduce((sum, marker) => sum + marker.y, 0) / a.markers.length
-          groups.splice(j, 1)
-          merged = true
-          break search
-        }
-      }
-    }
-  }
-  return groups
+  return routes.filter(hasPosition).map(route => ({
+    route,
+    x: route.positionX * drawing.width,
+    y: route.positionY * drawing.height,
+  }))
 }
 
 /** Only inert SVG geometry enters the measuring DOM; the visible drawing is an image. */

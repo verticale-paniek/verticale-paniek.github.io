@@ -2,7 +2,8 @@
   <li class="mt-2">
     <NuxtLink
       :to="{ path: '/toplogger/route', query: { id: route.id } }"
-      class="flex min-h-20 items-center gap-3 rounded-xl border border-outline bg-surface p-3 text-text transition hover:border-accent/50 hover:bg-accent/5 focus-visible:outline-2 focus-visible:outline-accent"
+      class="flex min-h-20 items-center gap-3 rounded-xl border border-l-4 p-3 text-text transition hover:border-accent/50 hover:bg-accent/5 focus-visible:outline-2 focus-visible:outline-accent"
+      :class="done ? 'border-emerald-600/50 border-l-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 dark:border-l-emerald-400' : 'border-outline bg-surface'"
     >
       <span
         v-if="rank"
@@ -33,8 +34,8 @@
         class="shrink-0 text-xs tabular-nums text-muted"
       ><span aria-hidden="true">×{{ tops }}</span><span class="sr-only">{{ tops }} ascents</span></span>
       <span
-        class="grid size-9 shrink-0 place-items-center rounded-lg text-lg"
-        :class="done ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300' : attempted ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400' : 'text-muted'"
+        class="flex min-h-9 shrink-0 flex-col items-center justify-center rounded-lg px-2 text-lg"
+        :class="done ? 'bg-emerald-700 text-white dark:bg-emerald-400 dark:text-emerald-950' : attempted ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400' : 'text-muted'"
         :title="done ? ascentLabel(tickType) : attempted ? 'Attempted' : 'To do'"
       >
         <Icon
@@ -47,6 +48,7 @@
           name="lucide:circle"
           aria-hidden="true"
         />
+        <span v-if="done" class="text-[10px] font-bold leading-3">DONE</span>
       </span>
     </NuxtLink>
   </li>
