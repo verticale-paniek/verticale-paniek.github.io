@@ -54,6 +54,7 @@ export type TopLoggerRequest
     | { action: 'disconnect' }
     | { action: 'profile' }
     | { action: 'routes', gymId?: string }
+    | { action: 'floorplan', path: string }
     | { action: 'history', gymId: string }
     | { action: 'routeDetail', gymId: string, routeId: string }
     | { action: 'logAscent', gymId: string, routeId: string, tickType: 0 | 1 | 2 | 3, climbedAtDate: string }

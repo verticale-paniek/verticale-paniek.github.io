@@ -6,6 +6,7 @@ import { callerId, corsHeaders, respond, throttle } from '../_shared/http.ts'
 import { exchangeRefreshToken, graphql, TopLoggerError, USER } from '../_shared/toplogger/graphql.ts'
 import { deleteLog, fetchRouteDetail, fetchRouteLogs, fetchVoteStats, logAscent, optional, unsend, voteGrade } from '../_shared/toplogger/climb.ts'
 import { fetchHistory } from '../_shared/toplogger/history.ts'
+import { fetchFloorplan } from '../_shared/toplogger/floorplan.ts'
 import { type Call, fetchHome, fetchProfile, type Profile } from '../_shared/toplogger/ops.ts'
 import {
   ConnectionError,
@@ -97,6 +98,9 @@ Deno.serve(async (req) => {
 
   try {
     switch (body.action) {
+      case 'floorplan':
+        return respond(req, 200, await fetchFloorplan(body.path))
+
       case 'status': {
         const row = await connectionStatus(userId)
         return respond(req, 200, row

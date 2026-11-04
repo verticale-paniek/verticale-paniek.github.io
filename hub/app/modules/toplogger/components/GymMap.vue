@@ -62,8 +62,10 @@
 import RouteCard from './RouteCard.vue'
 import { colorValue, frenchGrade, type Route } from '~/shell/toplogger/domain'
 import { floorplanUrl, hasPosition, mapMarkers, readDrawing } from '../utils/map'
+import { toploggerCall } from '~/shell/toplogger/api'
 
 const props = defineProps<{ floorplanPath?: string | null, routes: Route[] }>()
+const supabase = useSupabase()
 const sourceUrl = computed(() => floorplanUrl(props.floorplanPath))
 const drawing = shallowRef<ReturnType<typeof readDrawing> | null>(null)
 const error = ref('')
@@ -101,13 +103,9 @@ async function loadDrawing() {
     return
   }
   try {
-    const response = await fetch(sourceUrl.value, { signal: AbortSignal.any([current.signal, AbortSignal.timeout(15000)]), credentials: 'omit' })
-    if (!response.ok) {
-      throw new Error('Map unavailable')
-    }
-    const source = await response.text()
+    const { svg } = await toploggerCall<{ svg: string }>(supabase, { action: 'floorplan', path: props.floorplanPath! })
     if (!current.signal.aborted) {
-      drawing.value = readDrawing(source)
+      drawing.value = readDrawing(svg)
     }
   }
   catch {

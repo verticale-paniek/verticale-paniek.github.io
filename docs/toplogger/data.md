@@ -25,6 +25,7 @@ One Edge Function, one endpoint: `POST { action, ...params }` with the caller's 
 |---|---|---|
 | `status`, `connect`, `disconnect`, `profile` | Connection state and lifecycle (see `authentication.md`). | `userMe` |
 | `routes` | Home payload in one round trip: profile, the chosen gym (the requested one if you have it, else your home gym) and its routes with your progress. | `userMe` (cached), `climbs` (paged) |
+| `floorplan` | Authenticated read of a public gym SVG; path restricted to TopLogger uploads, redirects rejected, 2 MB limit. | `uploads.toplogger.nu` |
 | `routeDetail` | One route plus your logs plus community data, fetched in parallel. Logs or community may come back `null` without failing the screen. | `climb`, `climbLogs`, `climb` stats, `climbUsers` (toppers) |
 | `history` | The Top 10 data in one call (below). | `climbDaysPaginated` |
 | `logAscent` | Try (0), redpoint (1), flash (2), onsight (3). Returns your new progress and refreshed logs. | `climb`, then `climbUserLog` |
@@ -51,7 +52,7 @@ Everything is cached in `localStorage`, scoped by hub account (so one shared pho
 - **After a log, unsend or delete** the route's progress is updated everywhere at once, and the next visit to the Top 10 refetches.
 - Filters live in memory while the app is open, so they survive opening a route and coming back. They are not saved.
 - The List/Map choice also survives opening a route, but starts as List on a fresh app session. Profile snapshots include each gym's `floorplanPath`; route snapshots include `positionX` and `positionY`. Older snapshots still work as lists until refreshed.
-- The map fetches the public SVG from `uploads.toplogger.nu` only when opened. An allowlist of inert SVG geometry is measured to match TopLogger's coordinate normalization (position multiplied by drawing width/height, without adding the drawing origin), then displayed as a blob image. Map fetch failures leave the routes accessible; offline map availability depends on the browser's HTTP cache.
+- The map fetches the public SVG through the authenticated `floorplan` action only when opened: `uploads.toplogger.nu` does not permit browser reads from our origin. An allowlist of inert SVG geometry is measured to match TopLogger's coordinate normalization (position multiplied by drawing width/height, without adding the drawing origin), then displayed as a blob image. Map fetch failures leave the routes accessible; opening a map requires a network connection.
 - A cached snapshot shows immediately; the fresh answer replaces it. If a refresh fails, the cached data stays on screen with the error.
 
 Preferences (selected gym, Top 10 window) are also in the database, table `toplogger_prefs` (one row per user, owner-only RLS), so they follow you across devices. The device copy makes the app load instantly and still work offline; if the table is unreachable the app just uses the device copy.
