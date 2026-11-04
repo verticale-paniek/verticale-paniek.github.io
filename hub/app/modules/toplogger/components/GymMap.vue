@@ -12,14 +12,14 @@
     <template v-if="drawing">
       <div class="mb-2 flex items-center gap-2 rounded-xl border border-outline/50 bg-surface p-2">
         <p class="min-w-0 flex-1 px-1 text-sm font-semibold">
-          Select a marker
+          Select a route
         </p>
         <details class="relative shrink-0 text-sm text-muted">
           <summary class="grid size-11 cursor-pointer list-none place-items-center rounded-lg hover:bg-text/5 focus-visible:outline-2 focus-visible:outline-accent [&::-webkit-details-marker]:hidden" aria-label="Map help">
             ?
           </summary>
           <p class="absolute left-1/2 top-full z-20 mt-2 w-56 -translate-x-1/2 rounded-xl border border-outline bg-surface p-3 leading-relaxed shadow-lg">
-            Numbers identify ropes. Blue groups contain nearby ropes: select a group to browse its routes, or zoom in to separate them. Drag to move; pinch or scroll to zoom. Keyboard: arrow keys pan, +/− zoom, Home fits the map.
+            Each marker is one route: its grade and hold color identify it, and a check marks a completed route. Zoom in to see closely spaced routes. Drag to move; pinch or scroll to zoom. Keyboard: arrow keys pan, +/− zoom, Home fits the map.
           </p>
         </details>
         <button class="size-11 shrink-0 rounded-lg border border-outline text-lg hover:bg-text/5 focus-visible:outline-2 focus-visible:outline-accent" aria-label="Zoom out" @click="zoomAtCenter(1 / 1.4)">
@@ -56,51 +56,21 @@
           draggable="false"
           :style="{ left: `${view.x + drawing.rect.x * view.scale}px`, top: `${view.y + drawing.rect.y * view.scale}px`, width: `${drawing.rect.width * view.scale}px`, height: `${drawing.rect.height * view.scale}px` }"
         >
-        <template v-for="marker in markers" :key="marker.id">
-          <PopoverRoot v-if="marker.routes.length > 1">
-            <PopoverTrigger
-              class="absolute flex size-11 -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-lg border-2 border-white text-white shadow-sm focus-visible:z-10 focus-visible:outline-4 focus-visible:outline-blue-600"
-              :class="marker.ropes > 1 ? 'bg-blue-700' : 'bg-zinc-900'"
-              :style="{ left: `${view.x + marker.x * view.scale}px`, top: `${view.y + marker.y * view.scale}px` }"
-              :aria-label="`${marker.ropes > 1 ? `${marker.ropes} nearby ropes` : marker.route.label ? `Rope ${marker.route.label}` : 'Position'}, ${marker.routes.length} routes`"
-            >
-              <span class="text-base font-semibold leading-5">{{ marker.ropes > 1 ? marker.ropes : marker.route.label || '•' }}</span>
-              <span class="text-[10px] leading-3">{{ marker.ropes > 1 ? 'ropes' : `${marker.routes.length} routes` }}</span>
-            </PopoverTrigger>
-            <PopoverPortal>
-              <PopoverContent side="top" :side-offset="12" :collision-padding="16" class="z-30 w-80 max-w-[calc(100vw-2rem)] rounded-2xl border border-outline bg-bg p-3 text-text shadow-xl" :aria-label="marker.ropes > 1 ? 'Routes at nearby ropes' : `Routes at ${marker.route.label ? `rope ${marker.route.label}` : 'this position'}`">
-                <div class="flex items-center gap-2 border-b border-outline/50 pb-2">
-                  <div class="flex-1">
-                    <h2 class="text-base font-semibold">
-                      {{ marker.ropes > 1 ? `${marker.ropes} nearby ropes` : marker.route.label ? `Rope ${marker.route.label}` : 'Routes at this position' }}
-                    </h2>
-                    <p class="text-xs text-muted">
-                      {{ marker.routes.length }} routes · Select for details
-                    </p>
-                  </div>
-                  <PopoverClose class="grid size-11 place-items-center rounded-lg hover:bg-text/5 focus-visible:outline-2 focus-visible:outline-accent" aria-label="Close route picker">
-                    <Icon name="lucide:x" aria-hidden="true" />
-                  </PopoverClose>
-                </div>
-                <ul class="m-0 max-h-[45dvh] list-none overflow-y-auto overscroll-contain p-0">
-                  <RouteCard v-for="route in marker.routes" :key="route.id" :route="route" />
-                </ul>
-              </PopoverContent>
-            </PopoverPortal>
-          </PopoverRoot>
-          <NuxtLink
-            v-else
-            :to="{ path: '/toplogger/route', query: { id: marker.route.id } }"
-            class="absolute flex size-11 -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-lg border-2 border-white bg-zinc-900 text-white shadow-sm focus-visible:z-10 focus-visible:outline-4 focus-visible:outline-blue-600"
-            :style="{ left: `${view.x + marker.x * view.scale}px`, top: `${view.y + marker.y * view.scale}px` }"
-            :aria-label="`${marker.route.name || marker.route.label || 'Route'}, ${frenchGrade(marker.route.grade)}, ${marker.route.holdColor?.nameLoc || 'unknown color'}, ${ascentLabel(marker.route.climbUser?.tickType)}`"
-            draggable="false"
-            @dragstart.prevent
-          >
-            <span class="text-base font-semibold leading-5">{{ marker.route.label || frenchGrade(marker.route.grade) }}</span>
-            <span class="text-[10px] leading-3">{{ marker.route.label ? frenchGrade(marker.route.grade) : 'Route' }}</span>
-          </NuxtLink>
-        </template>
+        <NuxtLink
+          v-for="marker in markers"
+          :key="marker.route.id"
+          :to="{ path: '/toplogger/route', query: { id: marker.route.id } }"
+          class="absolute flex size-9 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-lg border-2 border-white text-sm font-bold shadow-md hover:z-10 focus-visible:z-10 focus-visible:outline-4 focus-visible:outline-blue-600"
+          :style="{ left: `${view.x + marker.x * view.scale}px`, top: `${view.y + marker.y * view.scale}px`, backgroundColor: colorValue(marker.route.holdColor?.color), color: markerTextColor(marker.route.holdColor?.color) }"
+          :aria-label="`${marker.route.name || `Rope ${marker.route.label || '?'}`}, ${frenchGrade(marker.route.grade)}, ${marker.route.holdColor?.nameLoc || 'unknown color'}, ${ascentLabel(marker.route.climbUser?.tickType)}`"
+          draggable="false"
+          @dragstart.prevent
+        >
+          {{ frenchGrade(marker.route.grade) }}
+          <span v-if="marker.route.climbUser?.tickType" class="absolute -right-1 -top-2 grid size-4 place-items-center rounded-full bg-emerald-700 text-white" aria-hidden="true">
+            <Icon name="lucide:check" class="text-xs" />
+          </span>
+        </NuxtLink>
       </div>
       <p v-if="unplaced.length" class="mt-4 text-sm text-muted">
         {{ unplaced.length }} routes have no map position:
@@ -114,8 +84,8 @@
 
 <script setup lang="ts">
 import RouteCard from './RouteCard.vue'
-import { ascentLabel, frenchGrade, type Route } from '~/shell/toplogger/domain'
-import { clusterMarkers, floorplanUrl, hasPosition, mapMarkers, readDrawing } from '../utils/map'
+import { ascentLabel, colorValue, frenchGrade, type Route } from '~/shell/toplogger/domain'
+import { floorplanUrl, hasPosition, mapMarkers, markerTextColor, readDrawing } from '../utils/map'
 import { toploggerCall } from '~/shell/toplogger/api'
 import type { mapNavigation } from '../utils/mapNavigation'
 
@@ -128,18 +98,14 @@ const viewport = useTemplateRef('viewport')
 const { width, height } = useElementSize(viewport)
 const navigation = props.navigation
 const { view } = navigation
-const positions = computed(() => drawing.value ? mapMarkers(props.routes, drawing.value.rect) : [])
-const markers = computed(() => clusterMarkers(positions.value, view.scale).map((group) => {
-  const routes = group.markers.flatMap(marker => marker.routes).sort((a, b) => a.grade - b.grade)
-  return { id: group.markers.map(marker => marker.id).join('|'), x: group.x, y: group.y, ropes: group.markers.length, routes, route: routes[0]! }
-}))
+const markers = computed(() => drawing.value ? mapMarkers(props.routes, drawing.value.rect) : [])
 const unplaced = computed(() => props.routes.filter(route => !hasPosition(route)))
 const frame = computed(() => {
-  if (!positions.value.length) {
+  if (!markers.value.length) {
     return drawing.value?.rect ?? { x: 0, y: 0, width: 1, height: 1 }
   }
-  const xs = positions.value.map(m => m.x)
-  const ys = positions.value.map(m => m.y)
+  const xs = markers.value.map(m => m.x)
+  const ys = markers.value.map(m => m.y)
   const x = Math.min(...xs) - 100
   const y = Math.min(...ys) - 100
   return { x, y, width: Math.max(...xs) + 100 - x, height: Math.max(...ys) + 100 - y }

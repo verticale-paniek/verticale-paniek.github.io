@@ -74,7 +74,7 @@
       <div
         class="flex gap-1 rounded-xl border border-outline/50 bg-surface p-1"
         role="group"
-        aria-label="Route completion"
+        aria-label="Route filters"
       >
         <button
           v-for="tab in completion"
@@ -158,7 +158,7 @@
             >{{ value }}</option>
           </select>
         </label>
-        <label class="col-span-2 grid gap-1.5 font-semibold">Ascent status
+        <label class="col-span-2 grid gap-1.5 font-semibold">Route status
           <select
             v-model="status"
             class="min-h-11 rounded-lg border border-outline bg-bg px-2 font-normal"
@@ -281,14 +281,14 @@ import RouteCard from '../components/RouteCard.vue'
 import GymMap from '../components/GymMap.vue'
 import TlTabs from '../components/TlTabs.vue'
 import { useTopLogger } from '../useTopLogger'
-import { defaultWallSelection, frenchGrade } from '~/shell/toplogger/domain'
+import { defaultWallSelection, frenchGrade, isNewRoute } from '~/shell/toplogger/domain'
 
 const { state, filters, gyms, activeRoutes, load, refresh, selectGym, resetFilters, mapNavigation } = useTopLogger()
 
 const { search, showFilters, grade, color, status, walls: selectedWalls } = toRefs(filters)
 const searchInput = useTemplateRef<HTMLInputElement>('searchInput')
 const filtersButton = useTemplateRef<HTMLButtonElement>('filtersButton')
-const statusLabels: Record<string, string> = { untried: 'To try', attempted: 'Attempted', todo: 'Not done', topped: 'Done' }
+const statusLabels: Record<string, string> = { untried: 'To try', attempted: 'Attempted', todo: 'Not done', topped: 'Done', new: 'New (last 14 days)' }
 
 const sorted = computed(() => [...activeRoutes.value].sort((a, b) =>
   a.grade - b.grade
@@ -300,13 +300,15 @@ const filtered = computed(() => {
   return sorted.value.filter((route) => {
     const cu = route.climbUser
     const matchesStatus = !status.value
-      || (status.value === 'topped'
-        ? (cu?.tickType || 0) > 0
-        : status.value === 'todo'
-          ? !cu?.tickType
-          : status.value === 'attempted'
-            ? (cu?.totalTries || 0) > 0 && !cu?.tickType
-            : !cu?.totalTries && !cu?.tickType)
+      || (status.value === 'new'
+        ? isNewRoute(route.inAt)
+        : status.value === 'topped'
+          ? (cu?.tickType || 0) > 0
+          : status.value === 'todo'
+            ? !cu?.tickType
+            : status.value === 'attempted'
+              ? (cu?.totalTries || 0) > 0 && !cu?.tickType
+              : !cu?.totalTries && !cu?.tickType)
     return (!query || [route.name, route.label, route.wall?.nameLoc, route.holdColor?.nameLoc, route.setterName, frenchGrade(route.grade)].some(v => v?.toLowerCase().includes(query)))
       && (!grade.value || String(route.grade) === grade.value)
       && (!selectedWalls.value.length || selectedWalls.value.includes(route.wall?.nameLoc || ''))
@@ -324,6 +326,7 @@ const completion = computed(() => [
   { id: '', title: 'All', count: activeRoutes.value.length },
   { id: 'todo', title: 'To do', count: activeRoutes.value.length - topped.value },
   { id: 'topped', title: 'Done', count: topped.value },
+  { id: 'new', title: 'New', count: activeRoutes.value.filter(r => isNewRoute(r.inAt)).length },
 ])
 const synced = computed(() => state.syncedAt
   ? new Date(state.syncedAt).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
