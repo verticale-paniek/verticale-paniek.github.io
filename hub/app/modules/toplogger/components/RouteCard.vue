@@ -2,23 +2,26 @@
   <li class="mt-2">
     <NuxtLink
       :to="{ path: '/toplogger/route', query: { id: route.id } }"
-      class="flex min-h-16 items-center gap-3 rounded-xl border bg-surface p-3 text-text transition hover:border-accent/50 focus-visible:outline-2 focus-visible:outline-accent"
-      :class="done ? 'border-emerald-500/60' : 'border-outline/50'"
+      class="flex min-h-20 items-center gap-3 rounded-xl border border-outline/50 bg-surface p-3 text-text transition hover:border-accent/50 hover:bg-accent/5 focus-visible:outline-2 focus-visible:outline-accent"
     >
       <span
         v-if="rank"
         class="w-5 shrink-0 text-xs tabular-nums text-muted"
       >{{ String(rank).padStart(2, '0') }}</span>
-      <span
-        class="size-3 shrink-0 rounded-full border border-outline"
-        :style="{ background: colorValue(route.holdColor?.color) }"
-        aria-hidden="true"
-      />
-      <strong class="w-10 shrink-0 text-lg tabular-nums">{{ frenchGrade(route.grade) }}</strong>
+      <span class="flex w-12 shrink-0 flex-col items-center gap-1.5 rounded-lg bg-bg py-2">
+        <strong class="text-lg leading-none tabular-nums">{{ frenchGrade(route.grade) }}</strong>
+        <span class="h-1.5 w-6 rounded-full border border-outline/50" :style="{ background: colorValue(route.holdColor?.color) }" aria-hidden="true" />
+      </span>
       <span class="flex min-w-0 flex-1 flex-col gap-0.5">
-        <span class="break-words text-sm font-semibold">{{ route.name || (route.label ? `Rope ${route.label}` : route.wall?.nameLoc || 'Route') }}</span>
+        <span class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-semibold">
+          <span class="break-words">{{ route.name || (route.label ? `Rope ${route.label}` : route.wall?.nameLoc || 'Route') }}</span>
+          <span v-if="isNew" class="rounded-full bg-accent/15 px-2 py-0.5 text-xs font-medium text-accent">New</span>
+        </span>
         <span class="break-words text-sm text-muted">
-          {{ route.wall?.nameLoc || 'Wall unknown' }} · {{ route.holdColor?.nameLoc || 'Color unknown' }}<template v-if="route.climbUser?.totalTries"> · {{ route.climbUser.totalTries }} {{ route.climbUser.totalTries === 1 ? 'attempt' : 'attempts' }}</template>
+          {{ route.wall?.nameLoc || 'Wall unknown' }} · {{ route.holdColor?.nameLoc || 'Color unknown' }}
+        </span>
+        <span class="text-xs text-muted">
+          <span :class="{ 'text-emerald-700 dark:text-emerald-300': done }">{{ done ? ascentLabel(tickType) : attempted ? 'Attempted' : 'To do' }}</span><template v-if="route.climbUser?.totalTries"> · {{ route.climbUser.totalTries }} {{ route.climbUser.totalTries === 1 ? 'attempt' : 'attempts' }}</template>
         </span>
         <span
           v-if="ranked"
@@ -26,16 +29,13 @@
         >{{ days ? `${daysLeftLabel(daysLeft(ranked.ascent.climbedAtDate, days))} · ` : '' }}{{ ranked.score }} points</span>
       </span>
       <span
-        v-if="isNew"
-        class="shrink-0 rounded-full bg-accent/15 px-2 py-0.5 text-xs font-semibold text-accent"
-      >New</span>
-      <span
         v-if="tops > 1 && !ranked"
         class="shrink-0 text-xs tabular-nums text-muted"
       ><span aria-hidden="true">×{{ tops }}</span><span class="sr-only">{{ tops }} ascents</span></span>
       <span
-        class="grid size-9 shrink-0 place-items-center rounded-lg border text-lg"
-        :class="done ? 'border-emerald-500 bg-emerald-600 text-white' : attempted ? 'border-outline/50 text-amber-500' : 'border-outline/50 text-muted'"
+        class="grid size-9 shrink-0 place-items-center rounded-full text-lg"
+        :class="done ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300' : attempted ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400' : 'text-muted'"
+        :title="done ? ascentLabel(tickType) : attempted ? 'Attempted' : 'To do'"
       >
         <Icon
           v-if="done"
@@ -47,7 +47,6 @@
           name="lucide:circle"
           aria-hidden="true"
         />
-        <span class="sr-only">{{ done ? ascentLabel(tickType) : attempted ? 'Attempted' : 'To do' }}</span>
       </span>
     </NuxtLink>
   </li>

@@ -10,23 +10,28 @@
       Loading gym map…
     </p>
     <template v-if="drawing">
-      <div class="mb-2 flex items-center gap-2">
-        <p class="flex-1 text-sm text-muted">
-          Drag to move. Pinch or scroll to zoom. Tap a grade for route details.
+      <div class="mb-2 flex items-center gap-2 rounded-xl border border-outline/50 bg-surface p-2">
+        <p class="min-w-0 flex-1 px-1 text-sm font-semibold">
+          Select a rope
         </p>
-        <button class="size-11 shrink-0 rounded-lg border border-outline" aria-label="Zoom out" @click="zoomAtCenter(1 / 1.4)">
+        <details class="relative shrink-0 text-sm text-muted">
+          <summary class="grid size-11 cursor-pointer list-none place-items-center rounded-lg hover:bg-text/5 focus-visible:outline-2 focus-visible:outline-accent [&::-webkit-details-marker]:hidden" aria-label="Map help">
+            ?
+          </summary>
+          <p class="absolute left-1/2 top-full z-20 mt-2 w-56 -translate-x-1/2 rounded-xl border border-outline bg-surface p-3 leading-relaxed shadow-lg">
+            Numbered markers group routes at the same rope. Select one to choose a route. Drag to move; pinch or scroll to zoom. Keyboard: arrow keys pan, +/− zoom, Home fits the map.
+          </p>
+        </details>
+        <button class="size-11 shrink-0 rounded-lg border border-outline text-lg hover:bg-text/5 focus-visible:outline-2 focus-visible:outline-accent" aria-label="Zoom out" @click="zoomAtCenter(1 / 1.4)">
           −
         </button>
-        <button class="size-11 shrink-0 rounded-lg border border-outline" aria-label="Zoom in" @click="zoomAtCenter(1.4)">
+        <button class="size-11 shrink-0 rounded-lg border border-outline text-lg hover:bg-text/5 focus-visible:outline-2 focus-visible:outline-accent" aria-label="Zoom in" @click="zoomAtCenter(1.4)">
           +
         </button>
-        <button class="min-h-11 shrink-0 rounded-lg border border-outline px-3 text-sm" @click="fit">
+        <button class="min-h-11 shrink-0 rounded-lg border border-outline px-3 text-sm hover:bg-text/5 focus-visible:outline-2 focus-visible:outline-accent" @click="fit">
           Fit
         </button>
       </div>
-      <p class="mb-2 text-sm text-muted">
-        Keyboard: arrow keys pan, +/− zoom, Home fits the map.
-      </p>
       <div
         ref="viewport"
         class="relative h-[60vh] min-h-80 max-h-[600px] touch-none select-none overflow-hidden rounded-xl border border-outline bg-white focus-visible:outline-2 focus-visible:outline-accent"
@@ -51,25 +56,56 @@
           draggable="false"
           :style="{ left: `${view.x + drawing.rect.x * view.scale}px`, top: `${view.y + drawing.rect.y * view.scale}px`, width: `${drawing.rect.width * view.scale}px`, height: `${drawing.rect.height * view.scale}px` }"
         >
-        <NuxtLink
-          v-for="marker in routeMarkers"
-          :key="marker.route.id"
-          :to="{ path: '/toplogger/route', query: { id: marker.route.id } }"
-          class="absolute flex size-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full focus-visible:z-10 focus-visible:outline-4 focus-visible:outline-blue-600"
-          :style="{ left: `${view.x + marker.x * view.scale + marker.offset}px`, top: `${view.y + marker.y * view.scale}px` }"
-          :aria-label="`${marker.route.name || marker.route.label || 'Route'}, ${frenchGrade(marker.route.grade)}, ${marker.route.holdColor?.nameLoc || 'unknown color'}, ${ascentLabel(marker.route.climbUser?.tickType)}`"
-          draggable="false"
-          @dragstart.prevent
-        >
-          <span v-if="marker.route.label" class="absolute -top-3 rounded bg-neutral-900 px-1 text-xs leading-5 text-white">{{ marker.route.label }}</span>
-          <span class="relative flex size-10 items-center justify-center overflow-hidden rounded-full text-base font-medium shadow-[0_0_6px_#0006]" :style="{ backgroundColor: colorValue(marker.route.holdColor?.color), color: markerTextColor(marker.route.holdColor?.color) }">
-            <span v-if="marker.route.holdColor?.colorSecondary" class="absolute inset-0" :style="{ background: `linear-gradient(135deg, transparent 50%, ${colorValue(marker.route.holdColor.colorSecondary)} 50%)` }" />
-            <span class="relative" :style="marker.route.holdColor?.colorSecondary ? { textShadow: `0 0 2px ${markerTextColor(marker.route.holdColor.color) === '#ffffff' ? '#000' : '#fff'}` } : {}">{{ frenchGrade(marker.route.grade) }}</span>
-          </span>
-          <span v-if="marker.route.climbUser?.tickType" class="absolute -left-1 -top-1 grid size-5 place-items-center rounded-full bg-neutral-900 text-green-400">
-            <Icon :name="marker.route.climbUser.tickType === 3 ? 'lucide:check-check' : marker.route.climbUser.tickType === 2 ? 'lucide:zap' : 'lucide:check'" aria-hidden="true" />
-          </span>
-        </NuxtLink>
+        <template v-for="marker in markers" :key="marker.id">
+          <PopoverRoot v-if="marker.routes.length > 1">
+            <PopoverTrigger
+              class="absolute flex size-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-xl border-2 border-white bg-slate-900 text-base font-semibold text-white shadow-md focus-visible:z-10 focus-visible:outline-4 focus-visible:outline-blue-600"
+              :style="{ left: `${view.x + marker.x * view.scale}px`, top: `${view.y + marker.y * view.scale}px` }"
+              :aria-label="`${marker.route.label ? `Rope ${marker.route.label}` : 'Position'}, ${marker.routes.length} routes`"
+            >
+              {{ marker.route.label || '•' }}
+              <span class="absolute -right-1.5 -top-1.5 grid min-w-5 place-items-center rounded-full bg-blue-600 px-1 text-[10px] leading-5 text-white">{{ marker.routes.length }}</span>
+            </PopoverTrigger>
+            <PopoverPortal>
+              <PopoverContent side="top" :side-offset="12" :collision-padding="16" class="z-30 w-80 max-w-[calc(100vw-2rem)] rounded-2xl border border-outline bg-bg p-3 text-text shadow-xl" :aria-label="`Routes at ${marker.route.label ? `rope ${marker.route.label}` : 'this position'}`">
+                <div class="flex items-center gap-2 border-b border-outline/50 pb-2">
+                  <div class="flex-1">
+                    <h2 class="text-base font-semibold">
+                      {{ marker.route.label ? `Rope ${marker.route.label}` : 'Routes at this position' }}
+                    </h2>
+                    <p class="text-xs text-muted">
+                      {{ marker.routes.length }} routes · Select for details
+                    </p>
+                  </div>
+                  <PopoverClose class="grid size-11 place-items-center rounded-lg hover:bg-text/5 focus-visible:outline-2 focus-visible:outline-accent" aria-label="Close route picker">
+                    <Icon name="lucide:x" aria-hidden="true" />
+                  </PopoverClose>
+                </div>
+                <ul class="m-0 max-h-[45dvh] list-none overflow-y-auto overscroll-contain p-0">
+                  <RouteCard v-for="route in marker.routes" :key="route.id" :route="route" />
+                </ul>
+              </PopoverContent>
+            </PopoverPortal>
+          </PopoverRoot>
+          <NuxtLink
+            v-else
+            :to="{ path: '/toplogger/route', query: { id: marker.route.id } }"
+            class="absolute flex size-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full focus-visible:z-10 focus-visible:outline-4 focus-visible:outline-blue-600"
+            :style="{ left: `${view.x + marker.x * view.scale}px`, top: `${view.y + marker.y * view.scale}px` }"
+            :aria-label="`${marker.route.name || marker.route.label || 'Route'}, ${frenchGrade(marker.route.grade)}, ${marker.route.holdColor?.nameLoc || 'unknown color'}, ${ascentLabel(marker.route.climbUser?.tickType)}`"
+            draggable="false"
+            @dragstart.prevent
+          >
+            <span v-if="marker.route.label" class="absolute -top-3 rounded bg-neutral-900 px-1 text-xs leading-5 text-white">{{ marker.route.label }}</span>
+            <span class="relative flex size-10 items-center justify-center overflow-hidden rounded-full text-base font-medium shadow-[0_0_6px_#0006]" :style="{ backgroundColor: colorValue(marker.route.holdColor?.color), color: markerTextColor(marker.route.holdColor?.color) }">
+              <span v-if="marker.route.holdColor?.colorSecondary" class="absolute inset-0" :style="{ background: `linear-gradient(135deg, transparent 50%, ${colorValue(marker.route.holdColor.colorSecondary)} 50%)` }" />
+              <span class="relative" :style="marker.route.holdColor?.colorSecondary ? { textShadow: `0 0 2px ${markerTextColor(marker.route.holdColor.color) === '#ffffff' ? '#000' : '#fff'}` } : {}">{{ frenchGrade(marker.route.grade) }}</span>
+            </span>
+            <span v-if="marker.route.climbUser?.tickType" class="absolute -left-1 -top-1 grid size-5 place-items-center rounded-full bg-neutral-900 text-green-400">
+              <Icon :name="marker.route.climbUser.tickType === 3 ? 'lucide:check-check' : marker.route.climbUser.tickType === 2 ? 'lucide:zap' : 'lucide:check'" aria-hidden="true" />
+            </span>
+          </NuxtLink>
+        </template>
       </div>
       <p v-if="unplaced.length" class="mt-4 text-sm text-muted">
         {{ unplaced.length }} routes have no map position:
@@ -97,10 +133,7 @@ const viewport = useTemplateRef('viewport')
 const { width, height } = useElementSize(viewport)
 const navigation = props.navigation
 const { view } = navigation
-const markers = computed(() => drawing.value ? mapMarkers(props.routes, drawing.value.rect) : [])
-const routeMarkers = computed(() => markers.value.flatMap(marker => marker.routes.map((route, index) => ({
-  route, x: marker.x, y: marker.y, offset: (index - (marker.routes.length - 1) / 2) * 44,
-}))))
+const markers = computed(() => drawing.value ? mapMarkers(props.routes, drawing.value.rect).map(marker => ({ ...marker, route: marker.routes[0]! })) : [])
 const unplaced = computed(() => props.routes.filter(route => !hasPosition(route)))
 const frame = computed(() => {
   if (!markers.value.length) {
@@ -128,7 +161,7 @@ function pointerDown(event: PointerEvent) {
   if (event.button !== 0) {
     return
   }
-  const target = (event.target as Element).closest('a') ?? viewport.value!
+  const target = (event.target as Element).closest('a, button') ?? viewport.value!
   target.setPointerCapture(event.pointerId)
   navigation.down(event.pointerId, point(event))
 }

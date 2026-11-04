@@ -31,4 +31,17 @@ describe('gym map', () => {
     expect(markers[0]).toMatchObject({ x: 600, y: 1170, routes: [routes[0], routes[1]] })
     expect(markers[1]).toMatchObject({ x: 0, y: 0 })
   })
+
+  it('groups nearby routes by rope within their wall, centered on their positions', () => {
+    const routes = [
+      { id: 'a', label: '4', wall: { nameLoc: 'Sector 1' }, positionX: 0.4, positionY: 0.5 },
+      { id: 'b', label: '4', wall: { nameLoc: 'Sector 1' }, positionX: 0.6, positionY: 0.7 },
+      { id: 'c', label: '4', wall: { nameLoc: 'Sector 2' }, positionX: 0.4, positionY: 0.5 },
+      { id: 'unplaced', label: '4', wall: { nameLoc: 'Sector 1' } },
+    ] as Route[]
+    const markers = mapMarkers(routes, { x: 0, y: 0, width: 1000, height: 1000 })
+    expect(markers).toHaveLength(2)
+    expect(markers[0]).toMatchObject({ x: 500, y: 600, routes: routes.slice(0, 2) })
+    expect(markers[1]).toMatchObject({ x: 400, y: 500, routes: [routes[2]] })
+  })
 })

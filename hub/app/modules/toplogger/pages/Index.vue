@@ -68,8 +68,11 @@
     </p>
 
     <template v-if="!state.needsConnect">
+      <p class="mb-1.5 mt-4 text-xs font-medium text-muted">
+        All routes in this gym
+      </p>
       <div
-        class="mt-4 flex gap-1 rounded-xl border border-outline/50 bg-bg p-1"
+        class="flex gap-1 rounded-xl border border-outline/50 bg-surface p-1"
         role="group"
         aria-label="Route completion"
       >
@@ -97,7 +100,7 @@
             v-model="search"
             class="w-full min-w-0 bg-transparent py-2 text-base outline-none"
             type="search"
-            placeholder="Search"
+            placeholder="Search routes…"
             aria-label="Search routes"
           >
         </label>
@@ -117,14 +120,6 @@
           </template>
         </button>
       </div>
-
-      <p class="mt-3 flex flex-wrap gap-x-3 gap-y-1 border-b border-outline/50 pb-2 text-sm text-muted" role="status">
-        <strong class="font-medium text-text">{{ filtered.length }} {{ filtered.length === 1 ? 'route' : 'routes' }}</strong>
-        <span v-if="grade">Grade {{ frenchGrade(Number(grade)) }}</span>
-        <span v-if="color">{{ color }}</span>
-        <span v-if="status">{{ statusLabels[status] }}<template v-if="status === 'untried'"> (no attempts)</template></span>
-        <span v-if="selectedWalls.length">{{ selectedWalls.length === 1 ? selectedWalls[0] : `${selectedWalls.length} walls selected` }}</span>
-      </p>
 
       <div
         v-if="showFilters"
@@ -213,17 +208,24 @@
         </button>
       </div>
 
-      <div class="my-3 flex gap-1 rounded-xl border border-outline/50 p-1" role="group" aria-label="Route view">
-        <button
-          v-for="view in (['list', 'map'] as const)"
-          :key="view"
-          class="min-h-11 flex-1 rounded-lg text-sm font-medium capitalize focus-visible:outline-2 focus-visible:outline-accent"
-          :class="state.view === view ? 'bg-accent/15 text-accent' : 'text-muted'"
-          :aria-pressed="state.view === view"
-          @click="state.view = view"
-        >
-          {{ view }}
-        </button>
+      <div class="mb-3 mt-4 flex flex-wrap items-center justify-between gap-3">
+        <p class="flex min-w-0 flex-1 flex-col gap-1 text-xs text-muted" role="status">
+          <strong class="text-sm font-semibold text-text">{{ filtered.length }} {{ filtered.length === 1 ? 'route' : 'routes' }} shown</strong>
+          <span>{{ selectedWalls.length === 1 ? selectedWalls[0] : selectedWalls.length ? `${selectedWalls.length} walls selected` : 'All walls' }}<template v-if="grade"> · {{ frenchGrade(Number(grade)) }}</template><template v-if="color"> · {{ color }}</template><template v-if="status"> · {{ statusLabels[status] }}<template v-if="status === 'untried'"> (no attempts)</template></template></span>
+        </p>
+        <div class="flex shrink-0 gap-1 rounded-xl border border-outline/50 bg-surface p-1" role="group" aria-label="Route view">
+          <button
+            v-for="view in (['list', 'map'] as const)"
+            :key="view"
+            class="flex min-h-11 items-center justify-center gap-1.5 rounded-lg px-3 text-sm font-medium capitalize focus-visible:outline-2 focus-visible:outline-accent"
+            :class="state.view === view ? 'bg-accent/15 text-accent' : 'text-muted'"
+            :aria-pressed="state.view === view"
+            @click="state.view = view"
+          >
+            <Icon :name="view === 'list' ? 'lucide:list' : 'lucide:map'" aria-hidden="true" />
+            {{ view }}
+          </button>
+        </div>
       </div>
       <GymMap
         v-if="state.view === 'map'"

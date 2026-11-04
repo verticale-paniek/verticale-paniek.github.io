@@ -30,12 +30,17 @@ export interface MapRect { x: number, y: number, width: number, height: number }
 export function mapMarkers(routes: Route[], drawing: MapRect) {
   const groups = new Map<string, { x: number, y: number, routes: Route[] }>()
   for (const route of routes.filter(hasPosition)) {
-    const key = `${route.positionX},${route.positionY}`
-    const group = groups.get(key) ?? { x: route.positionX * drawing.width, y: route.positionY * drawing.height, routes: [] }
+    // Routes on one rope can have slightly different coordinates in TopLogger.
+    const key = route.label
+      ? JSON.stringify([route.wall?.nameLoc, route.label])
+      : `${route.positionX},${route.positionY}`
+    const group = groups.get(key) ?? { x: 0, y: 0, routes: [] }
+    group.x += route.positionX * drawing.width
+    group.y += route.positionY * drawing.height
     group.routes.push(route)
     groups.set(key, group)
   }
-  return [...groups.entries()].map(([id, marker]) => ({ id, ...marker }))
+  return [...groups.entries()].map(([id, marker]) => ({ id, routes: marker.routes, x: marker.x / marker.routes.length, y: marker.y / marker.routes.length }))
 }
 
 /** Only inert SVG geometry enters the measuring DOM; the visible drawing is an image. */
