@@ -34,7 +34,7 @@
       </div>
       <div
         ref="viewport"
-        class="relative h-[calc(100dvh-32rem)] min-h-64 max-h-[600px] touch-none select-none overflow-hidden rounded-xl border border-outline bg-white focus-visible:outline-2 focus-visible:outline-accent"
+        class="relative h-[calc(100dvh-28rem)] min-h-64 max-h-[600px] touch-none select-none overflow-hidden rounded-xl border border-outline bg-white focus-visible:outline-2 focus-visible:outline-accent"
         :class="view.dragging ? 'cursor-grabbing' : 'cursor-grab'"
         tabindex="0"
         role="region"

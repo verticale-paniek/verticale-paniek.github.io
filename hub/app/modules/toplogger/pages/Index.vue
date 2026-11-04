@@ -88,36 +88,37 @@
         </button>
       </div>
 
-      <div class="mt-3 flex gap-2">
-        <label class="flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-xl border border-outline bg-bg px-3 focus-within:outline-2 focus-within:outline-accent">
-          <Icon
-            name="lucide:search"
-            class="shrink-0 text-muted"
-            aria-hidden="true"
-          />
-          <input
-            ref="searchInput"
-            v-model="search"
-            class="w-full min-w-0 bg-transparent py-2 text-base outline-none"
-            type="search"
-            placeholder="Search routes…"
-            aria-label="Search routes"
+      <div class="mb-3 mt-4 flex flex-wrap items-center justify-between gap-2">
+        <p class="flex min-w-0 flex-1 flex-col gap-1 text-xs text-muted" role="status">
+          <strong class="text-sm font-semibold text-text">{{ filtered.length }} {{ filtered.length === 1 ? 'route' : 'routes' }} shown</strong>
+          <span>{{ selectedWalls.length === 1 ? selectedWalls[0] : selectedWalls.length ? `${selectedWalls.length} walls selected` : 'All walls' }}<template v-if="grade"> · {{ frenchGrade(Number(grade)) }}</template><template v-if="color"> · {{ color }}</template><template v-if="status"> · {{ statusLabels[status] }}<template v-if="status === 'untried'"> (no attempts)</template></template></span>
+        </p>
+        <div class="flex shrink-0 gap-1 rounded-lg border border-outline/50 bg-surface p-0.5" role="group" aria-label="Route view">
+          <button
+            v-for="view in (['list', 'map'] as const)"
+            :key="view"
+            class="grid size-11 place-items-center rounded-md text-base focus-visible:outline-2 focus-visible:outline-accent"
+            :class="state.view === view ? 'bg-accent/15 text-accent' : 'text-muted'"
+            :aria-pressed="state.view === view"
+            :aria-label="view === 'list' ? 'List view' : 'Map view'"
+            :title="view === 'list' ? 'List view' : 'Map view'"
+            @click="state.view = view"
           >
-        </label>
+            <Icon :name="view === 'list' ? 'lucide:list' : 'lucide:map'" aria-hidden="true" />
+          </button>
+        </div>
         <button
           ref="filtersButton"
-          class="flex min-h-11 items-center gap-1.5 rounded-xl border border-outline px-3 text-sm focus-visible:outline-2 focus-visible:outline-accent"
+          class="relative grid size-11 shrink-0 place-items-center rounded-lg border border-outline text-lg focus-visible:outline-2 focus-visible:outline-accent"
+          :class="showFilters || filterCount ? 'bg-accent/10 text-accent' : 'text-muted'"
+          :aria-label="filterCount ? `Filters, ${filterCount} active` : 'Filters'"
+          title="Filters"
           :aria-expanded="showFilters"
           aria-controls="filters"
           @click="showFilters = !showFilters"
         >
-          <Icon
-            name="lucide:sliders-horizontal"
-            aria-hidden="true"
-          />
-          Filters<template v-if="filterCount">
-            · {{ filterCount }}
-          </template>
+          <Icon name="lucide:sliders-horizontal" aria-hidden="true" />
+          <span v-if="filterCount" class="absolute right-1.5 top-1.5 size-1.5 rounded-full bg-accent" aria-hidden="true" />
         </button>
       </div>
 
@@ -208,25 +209,6 @@
         </button>
       </div>
 
-      <div class="mb-3 mt-4 flex flex-wrap items-center justify-between gap-3">
-        <p class="flex min-w-0 flex-1 flex-col gap-1 text-xs text-muted" role="status">
-          <strong class="text-sm font-semibold text-text">{{ filtered.length }} {{ filtered.length === 1 ? 'route' : 'routes' }} shown</strong>
-          <span>{{ selectedWalls.length === 1 ? selectedWalls[0] : selectedWalls.length ? `${selectedWalls.length} walls selected` : 'All walls' }}<template v-if="grade"> · {{ frenchGrade(Number(grade)) }}</template><template v-if="color"> · {{ color }}</template><template v-if="status"> · {{ statusLabels[status] }}<template v-if="status === 'untried'"> (no attempts)</template></template></span>
-        </p>
-        <div class="flex shrink-0 gap-1 rounded-xl border border-outline/50 bg-surface p-1" role="group" aria-label="Route view">
-          <button
-            v-for="view in (['list', 'map'] as const)"
-            :key="view"
-            class="flex min-h-11 items-center justify-center gap-1.5 rounded-lg px-3 text-sm font-medium capitalize focus-visible:outline-2 focus-visible:outline-accent"
-            :class="state.view === view ? 'bg-accent/15 text-accent' : 'text-muted'"
-            :aria-pressed="state.view === view"
-            @click="state.view = view"
-          >
-            <Icon :name="view === 'list' ? 'lucide:list' : 'lucide:map'" aria-hidden="true" />
-            {{ view }}
-          </button>
-        </div>
-      </div>
       <GymMap
         v-if="state.view === 'map'"
         :key="`${state.gymId}:${gyms.find(g => g.id === state.gymId)?.floorplanPath ?? ''}`"
@@ -246,22 +228,15 @@
         class="py-8 text-center text-muted"
       >
         <p role="status">
-          {{ state.busy ? 'Fetching the latest from TopLogger…' : search || filterCount ? 'No matching routes. Try a broader search or clear your filters.' : 'No routes to show.' }}
+          {{ state.busy ? 'Fetching the latest from TopLogger…' : filterCount ? 'No matching routes. Try clearing your filters.' : 'No routes to show.' }}
         </p>
         <div v-if="!state.busy" class="mt-3 flex flex-wrap justify-center gap-2">
           <button
-            v-if="search"
-            class="min-h-11 rounded-xl border border-outline px-4 text-sm font-semibold text-text focus-visible:outline-2 focus-visible:outline-accent"
-            @click="search = ''; searchInput?.focus()"
-          >
-            Clear search
-          </button>
-          <button
             v-if="filterCount"
             class="min-h-11 rounded-xl border border-outline px-4 text-sm font-semibold text-text focus-visible:outline-2 focus-visible:outline-accent"
-            @click="resetAll(); searchInput?.focus()"
+            @click="resetAll(); filtersButton?.focus()"
           >
-            Reset search and filters
+            Reset filters
           </button>
         </div>
       </div>
@@ -285,8 +260,7 @@ import { defaultWallSelection, frenchGrade, isNewRoute } from '~/shell/toplogger
 
 const { state, filters, gyms, activeRoutes, load, refresh, selectGym, resetFilters, mapNavigation } = useTopLogger()
 
-const { search, showFilters, grade, color, status, walls: selectedWalls } = toRefs(filters)
-const searchInput = useTemplateRef<HTMLInputElement>('searchInput')
+const { showFilters, grade, color, status, walls: selectedWalls } = toRefs(filters)
 const filtersButton = useTemplateRef<HTMLButtonElement>('filtersButton')
 const statusLabels: Record<string, string> = { untried: 'To try', attempted: 'Attempted', todo: 'Not done', topped: 'Done', new: 'New (last 14 days)' }
 
@@ -296,7 +270,6 @@ const sorted = computed(() => [...activeRoutes.value].sort((a, b) =>
   || (a.label || '').localeCompare(b.label || '', undefined, { numeric: true })))
 
 const filtered = computed(() => {
-  const query = search.value.trim().toLowerCase()
   return sorted.value.filter((route) => {
     const cu = route.climbUser
     const matchesStatus = !status.value
@@ -309,8 +282,7 @@ const filtered = computed(() => {
             : status.value === 'attempted'
               ? (cu?.totalTries || 0) > 0 && !cu?.tickType
               : !cu?.totalTries && !cu?.tickType)
-    return (!query || [route.name, route.label, route.wall?.nameLoc, route.holdColor?.nameLoc, route.setterName, frenchGrade(route.grade)].some(v => v?.toLowerCase().includes(query)))
-      && (!grade.value || String(route.grade) === grade.value)
+    return (!grade.value || String(route.grade) === grade.value)
       && (!selectedWalls.value.length || selectedWalls.value.includes(route.wall?.nameLoc || ''))
       && (!color.value || route.holdColor?.nameLoc === color.value)
       && matchesStatus

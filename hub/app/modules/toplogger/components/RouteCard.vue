@@ -2,7 +2,7 @@
   <li class="mt-2">
     <NuxtLink
       :to="{ path: '/toplogger/route', query: { id: route.id } }"
-      class="flex min-h-20 items-center gap-3 rounded-xl border border-l-4 p-3 text-text transition hover:border-accent/50 hover:bg-accent/5 focus-visible:outline-2 focus-visible:outline-accent"
+      class="flex min-h-18 items-center gap-3 rounded-xl border border-l-4 p-3 text-text transition hover:border-accent/50 hover:bg-accent/5 focus-visible:outline-2 focus-visible:outline-accent"
       :class="done ? 'border-emerald-600/50 border-l-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 dark:border-l-emerald-400' : 'border-outline bg-surface'"
     >
       <span
@@ -18,7 +18,7 @@
           <span class="break-words">{{ route.name || (route.label ? `Rope ${route.label}` : route.wall?.nameLoc || 'Route') }}</span>
           <span v-if="isNew" class="rounded-md bg-accent/15 px-2 py-0.5 text-xs font-medium text-accent">New</span>
         </span>
-        <span class="break-words text-sm text-muted">
+        <span class="sr-only">
           {{ route.wall?.nameLoc || 'Wall unknown' }} · {{ route.holdColor?.nameLoc || 'Color unknown' }}
         </span>
         <span class="text-xs text-muted">

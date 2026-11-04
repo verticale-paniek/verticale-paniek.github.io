@@ -33,7 +33,6 @@ const state = reactive({
 
 /** List filters live here (not in the page) so they survive opening a route and coming back. */
 const filters = reactive({
-  search: '',
   showFilters: false,
   grade: '',
   color: '',
@@ -135,7 +134,7 @@ function staleHistory(): void {
 }
 
 function resetFilters(): void {
-  Object.assign(filters, { search: '', grade: '', color: '', status: '', walls: [], wallsChosen: false })
+  Object.assign(filters, { grade: '', color: '', status: '', walls: [], wallsChosen: false })
 }
 
 function apply(home: Home): void {
