@@ -12,7 +12,7 @@ The module has a bottom tab bar (`/toplogger`):
 
 | Screen | Path | What it shows |
 |---|---|---|
-| Routes | `/toplogger` | List by default, with an optional gym map. Both share All / To do / Done, search and filters (grade, hold colour, status, walls). Klimax defaults to sectors 1 to 7. Map markers open route cards; routes sharing a position are grouped. Zoom buttons and scrolling let you explore. Routes without coordinates, or without a working floorplan, remain listed. |
+| Routes | `/toplogger` | List by default, with an optional gym map. Both share All / To do / Done, search and filters (grade, hold colour, status, walls). Klimax defaults to sectors 1 to 7. Filled hold-color circles show grades, rope labels and completion badges, and open route details directly. Two-color holds use split circles; routes sharing coordinates are spread slightly so each can be tapped. Drag to pan, pinch or scroll to zoom, or use the zoom/Fit buttons. Keyboard: arrows pan, +/− zoom, Home fits. Dragging does not open a route. Routes without coordinates, or without a working floorplan, remain listed. |
 | Top 10 | `/toplogger/top` | Your best ascents in the last 60, 120 or 180 days, scored as grade (redpoint), +10 (flash) or +15 (onsight), with days left and the average. |
 | Route | `/toplogger/route?id=...` | One route: log Onsight / Flash / Redpoint, Try, Repeat, Unsend, your log with delete, a five-grade vote, route facts, your ascents, community votes, ratings and toppers. |
 | Account | `/toplogger/account` | Connect and disconnect. |

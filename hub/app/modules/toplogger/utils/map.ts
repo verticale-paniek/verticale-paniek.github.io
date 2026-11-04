@@ -1,4 +1,17 @@
 import type { Route } from '~/shell/toplogger/domain'
+import { colorValue } from '~/shell/toplogger/domain'
+
+export function markerTextColor(color?: string): string {
+  let hex = colorValue(color).slice(1)
+  if (hex.length === 3) {
+    hex = [...hex].map(c => c + c).join('')
+  }
+  const [r, g, b] = [0, 2, 4].map((i) => {
+    const value = parseInt(hex.slice(i, i + 2), 16) / 255
+    return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4
+  })
+  return 0.2126 * r! + 0.7152 * g! + 0.0722 * b! > 0.179 ? '#111111' : '#ffffff'
+}
 
 export function floorplanUrl(path?: string | null): string | null {
   return path && /^gyms\/[\w-]+\/floorplans\/[\w.-]+\.svg$/.test(path)

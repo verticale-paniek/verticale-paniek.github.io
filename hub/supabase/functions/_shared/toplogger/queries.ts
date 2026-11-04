@@ -2,7 +2,7 @@
 // query text. Field lists were ported from the original Android app (verified against the live schema there).
 /** A route as TopLogger describes it, without this user's progress on it. */
 export const ROUTE_CORE = `id grade name label inAt outAt outPlannedAt setterName leadEnabled leadRequired
-  climbSetters { gymAdmin { name } } wall { nameLoc } holdColor { color nameLoc }`
+  climbSetters { gymAdmin { name } } wall { nameLoc } holdColor { color nameLoc colorSecondary }`
 
 export const ROUTE_FIELDS = `${ROUTE_CORE}
   climbUser(userId: $userId) { grade tickType totalTries totalTicks triedFirstAtDate tickedFirstAtDate }`

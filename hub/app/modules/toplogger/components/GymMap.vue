@@ -12,42 +12,62 @@
     <template v-if="drawing">
       <div class="mb-2 flex items-center gap-2">
         <p class="flex-1 text-xs text-muted">
-          Tap a marker to see routes. ✓ = done. Scroll to move around.
+          Drag to move. Pinch or scroll to zoom. Tap a grade for route details.
         </p>
-        <button class="size-11 rounded-lg border border-outline disabled:opacity-40" aria-label="Zoom out" :disabled="zoom <= 1" @click="zoom = Math.max(1, zoom - 0.5)">
+        <button class="size-11 shrink-0 rounded-lg border border-outline" aria-label="Zoom out" @click="zoomAtCenter(1 / 1.4)">
           −
         </button>
-        <button class="size-11 rounded-lg border border-outline disabled:opacity-40" aria-label="Zoom in" :disabled="zoom >= 4" @click="zoom = Math.min(4, zoom + 0.5)">
+        <button class="size-11 shrink-0 rounded-lg border border-outline" aria-label="Zoom in" @click="zoomAtCenter(1.4)">
           +
         </button>
+        <button class="min-h-11 shrink-0 rounded-lg border border-outline px-3 text-sm" @click="fit">
+          Fit
+        </button>
       </div>
-      <div class="max-h-[65vh] overflow-auto rounded-xl border border-outline bg-white" tabindex="0" aria-label="Gym map; scroll to pan">
-        <div class="relative overflow-hidden" :style="{ width: `${zoom * 100}%`, minWidth: `${360 * frame.width / frame.height * zoom}px`, aspectRatio: `${frame.width} / ${frame.height}` }">
-          <img
-            :src="drawing.url"
-            alt="Gym floorplan from TopLogger"
-            class="pointer-events-none absolute max-w-none"
-            :style="{ left: `${(drawing.rect.x - frame.x) / frame.width * 100}%`, top: `${(drawing.rect.y - frame.y) / frame.height * 100}%`, width: `${drawing.rect.width / frame.width * 100}%`, height: `${drawing.rect.height / frame.height * 100}%` }"
-          >
-          <button
-            v-for="marker in markers"
-            :key="marker.id"
-            class="absolute flex size-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-slate-800 bg-white text-xs font-bold text-slate-950 shadow focus-visible:outline-4 focus-visible:outline-blue-600"
-            :class="{ 'ring-4 ring-blue-600': selected === marker.id }"
-            :style="{ left: `${(marker.x - frame.x) / frame.width * 100}%`, top: `${(marker.y - frame.y) / frame.height * 100}%`, borderColor: colorValue(marker.routes[0]?.holdColor?.color) }"
-            :aria-label="marker.routes.map(r => `${r.name || r.label || 'Route'}, ${frenchGrade(r.grade)}, ${r.holdColor?.nameLoc || 'unknown color'}, ${r.climbUser?.tickType ? 'done' : 'to do'}`).join('; ')"
-            :aria-pressed="selected === marker.id"
-            @click="selected = selected === marker.id ? '' : marker.id"
-          >
-            {{ marker.routes[0]?.label || frenchGrade(marker.routes[0]?.grade) }}
-            <span v-if="marker.routes.length > 1" class="absolute -right-1 -top-2 rounded-full bg-slate-800 px-1 text-white">{{ marker.routes.length }}</span>
-            <span v-if="marker.routes.every(r => r.climbUser?.tickType)" class="absolute -bottom-2 rounded-full bg-emerald-700 px-1 text-white">✓</span>
-          </button>
-        </div>
+      <div
+        ref="viewport"
+        class="relative h-[60vh] min-h-80 max-h-[600px] touch-none select-none overflow-hidden rounded-xl border border-outline bg-white focus-visible:outline-2 focus-visible:outline-accent"
+        :class="view.dragging ? 'cursor-grabbing' : 'cursor-grab'"
+        tabindex="0"
+        role="region"
+        aria-label="Gym map. Drag to pan, pinch or scroll to zoom. Arrow keys pan; plus and minus zoom; Home fits the map."
+        @pointerdown="pointerDown"
+        @pointermove="navigation.move($event.pointerId, point($event))"
+        @pointerup="navigation.up($event.pointerId)"
+        @pointercancel="navigation.up($event.pointerId)"
+        @lostpointercapture="navigation.up($event.pointerId)"
+        @wheel.prevent="wheel"
+        @click.capture="guardClick"
+        @keydown="keyDown"
+      >
+        <img
+          v-if="drawing"
+          :src="drawing.url"
+          alt="Gym floorplan from TopLogger"
+          class="pointer-events-none absolute max-w-none"
+          draggable="false"
+          :style="{ left: `${view.x + drawing.rect.x * view.scale}px`, top: `${view.y + drawing.rect.y * view.scale}px`, width: `${drawing.rect.width * view.scale}px`, height: `${drawing.rect.height * view.scale}px` }"
+        >
+        <NuxtLink
+          v-for="marker in routeMarkers"
+          :key="marker.route.id"
+          :to="{ path: '/toplogger/route', query: { id: marker.route.id } }"
+          class="absolute flex size-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full focus-visible:z-10 focus-visible:outline-4 focus-visible:outline-blue-600"
+          :style="{ left: `${view.x + marker.x * view.scale + marker.offset}px`, top: `${view.y + marker.y * view.scale}px` }"
+          :aria-label="`${marker.route.name || marker.route.label || 'Route'}, ${frenchGrade(marker.route.grade)}, ${marker.route.holdColor?.nameLoc || 'unknown color'}, ${ascentLabel(marker.route.climbUser?.tickType)}`"
+          draggable="false"
+          @dragstart.prevent
+        >
+          <span v-if="marker.route.label" class="absolute -top-3 rounded bg-neutral-900 px-1 text-xs leading-5 text-white">{{ marker.route.label }}</span>
+          <span class="relative flex size-10 items-center justify-center overflow-hidden rounded-full text-base font-medium shadow-[0_0_6px_#0006]" :style="{ backgroundColor: colorValue(marker.route.holdColor?.color), color: markerTextColor(marker.route.holdColor?.color) }">
+            <span v-if="marker.route.holdColor?.colorSecondary" class="absolute inset-0" :style="{ background: `linear-gradient(135deg, transparent 50%, ${colorValue(marker.route.holdColor.colorSecondary)} 50%)` }" />
+            <span class="relative" :style="marker.route.holdColor?.colorSecondary ? { textShadow: `0 0 2px ${markerTextColor(marker.route.holdColor.color) === '#ffffff' ? '#000' : '#fff'}` } : {}">{{ frenchGrade(marker.route.grade) }}</span>
+          </span>
+          <span v-if="marker.route.climbUser?.tickType" class="absolute -left-1 -top-1 grid size-5 place-items-center rounded-full bg-neutral-900 text-green-400">
+            <Icon :name="marker.route.climbUser.tickType === 3 ? 'lucide:check-check' : marker.route.climbUser.tickType === 2 ? 'lucide:zap' : 'lucide:check'" aria-hidden="true" />
+          </span>
+        </NuxtLink>
       </div>
-      <ul v-if="selectedRoutes.length" class="m-0 list-none p-0" aria-label="Selected map routes">
-        <RouteCard v-for="route in selectedRoutes" :key="route.id" :route="route" />
-      </ul>
       <p v-if="unplaced.length" class="mt-4 text-sm text-muted">
         {{ unplaced.length }} routes have no map position:
       </p>
@@ -60,20 +80,25 @@
 
 <script setup lang="ts">
 import RouteCard from './RouteCard.vue'
-import { colorValue, frenchGrade, type Route } from '~/shell/toplogger/domain'
-import { floorplanUrl, hasPosition, mapMarkers, readDrawing } from '../utils/map'
+import { ascentLabel, colorValue, frenchGrade, type Route } from '~/shell/toplogger/domain'
+import { floorplanUrl, hasPosition, mapMarkers, markerTextColor, readDrawing } from '../utils/map'
 import { toploggerCall } from '~/shell/toplogger/api'
+import { mapNavigation } from '../utils/mapNavigation'
 
 const props = defineProps<{ floorplanPath?: string | null, routes: Route[] }>()
 const supabase = useSupabase()
 const sourceUrl = computed(() => floorplanUrl(props.floorplanPath))
 const drawing = shallowRef<ReturnType<typeof readDrawing> | null>(null)
 const error = ref('')
-const zoom = ref(1)
-const selected = ref('')
+const viewport = useTemplateRef('viewport')
+const { width, height } = useElementSize(viewport)
+const navigation = mapNavigation()
+const { view } = navigation
 const markers = computed(() => drawing.value ? mapMarkers(props.routes, drawing.value.rect) : [])
+const routeMarkers = computed(() => markers.value.flatMap(marker => marker.routes.map((route, index) => ({
+  route, x: marker.x, y: marker.y, offset: (index - (marker.routes.length - 1) / 2) * 44,
+}))))
 const unplaced = computed(() => props.routes.filter(route => !hasPosition(route)))
-const selectedRoutes = computed(() => markers.value.find(marker => marker.id === selected.value)?.routes ?? [])
 const frame = computed(() => {
   if (!markers.value.length) {
     return drawing.value?.rect ?? { x: 0, y: 0, width: 1, height: 1 }
@@ -84,6 +109,65 @@ const frame = computed(() => {
   const y = Math.min(...ys) - 100
   return { x, y, width: Math.max(...xs) + 100 - x, height: Math.max(...ys) + 100 - y }
 })
+function fit() {
+  navigation.fit(frame.value, width.value, height.value)
+}
+watch(() => [width.value, height.value, frame.value.x, frame.value.y, frame.value.width, frame.value.height], fit)
+function point(event: { clientX: number, clientY: number }) {
+  const rect = viewport.value!.getBoundingClientRect()
+  return { x: event.clientX - rect.left, y: event.clientY - rect.top }
+}
+function pointerDown(event: PointerEvent) {
+  if (event.button !== 0) {
+    return
+  }
+  const target = (event.target as Element).closest('a') ?? viewport.value!
+  target.setPointerCapture(event.pointerId)
+  navigation.down(event.pointerId, point(event))
+}
+function guardClick(event: MouseEvent) {
+  if (view.moved && event.detail !== 0) {
+    event.preventDefault()
+    event.stopPropagation()
+  }
+}
+function zoomAtCenter(factor: number) {
+  navigation.zoom(factor, { x: width.value / 2, y: height.value / 2 })
+}
+function wheel(event: WheelEvent) {
+  const delta = event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? height.value : 1)
+  navigation.zoom(Math.exp(-Math.max(-500, Math.min(500, delta)) * 0.002), point(event))
+}
+function keyDown(event: KeyboardEvent) {
+  if (event.target !== viewport.value) {
+    return
+  }
+  switch (event.key) {
+    case 'ArrowLeft':
+      view.x += 40
+      break
+    case 'ArrowRight':
+      view.x -= 40
+      break
+    case 'ArrowUp':
+      view.y += 40
+      break
+    case 'ArrowDown':
+      view.y -= 40
+      break
+    case '+': case '=':
+      zoomAtCenter(1.4)
+      break
+    case '-':
+      zoomAtCenter(1 / 1.4)
+      break
+    case 'Home':
+      fit()
+      break
+    default: return
+  }
+  event.preventDefault()
+}
 let controller: AbortController | undefined
 function clearDrawing() {
   if (drawing.value) {
@@ -97,8 +181,6 @@ async function loadDrawing() {
   controller = current
   clearDrawing()
   error.value = ''
-  zoom.value = 1
-  selected.value = ''
   if (!sourceUrl.value) {
     return
   }

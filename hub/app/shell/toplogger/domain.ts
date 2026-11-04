@@ -25,7 +25,7 @@ export interface Route {
   leadEnabled?: boolean
   leadRequired?: boolean
   wall: { nameLoc: string } | null
-  holdColor: { color: string, nameLoc: string } | null
+  holdColor: { color: string, nameLoc: string, colorSecondary?: string | null } | null
   setterName: string | null
   climbSetters: { gymAdmin: { name: string } }[]
   inAt: string | null
