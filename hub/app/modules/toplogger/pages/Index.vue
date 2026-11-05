@@ -42,7 +42,7 @@
     >
       TopLogger is not connected. <NuxtLink
         class="font-semibold text-accent underline"
-        to="/toplogger/account"
+        to="/account#toplogger"
       >
         Connect your account
       </NuxtLink> to see the routes.

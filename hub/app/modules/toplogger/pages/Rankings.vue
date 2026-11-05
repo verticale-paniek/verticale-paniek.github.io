@@ -18,7 +18,7 @@
       Route rankings from TopLogger · All walls
     </p>
     <p v-if="state.needsConnect" class="my-6" role="status">
-      <NuxtLink to="/toplogger/account" class="text-accent underline">Connect TopLogger</NuxtLink> to see gym rankings.
+      <NuxtLink to="/account#toplogger" class="text-accent underline">Connect TopLogger</NuxtLink> to see gym rankings.
     </p>
     <template v-else>
       <div class="mt-5 flex gap-1 rounded-xl border border-outline bg-surface p-1" role="group" aria-label="Ranking type">

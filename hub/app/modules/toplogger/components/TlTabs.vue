@@ -31,7 +31,6 @@ const tabs = [
   { to: '/toplogger', title: 'Routes', icon: 'lucide:layout-grid', paths: ['/toplogger', '/toplogger/route'] },
   { to: '/toplogger/top', title: 'Top 10', icon: 'lucide:trophy', paths: ['/toplogger/top'] },
   { to: '/toplogger/rankings', title: 'Rankings', icon: 'lucide:medal', paths: ['/toplogger/rankings'] },
-  { to: '/toplogger/account', title: 'Account', icon: 'lucide:user-round', paths: ['/toplogger/account'] },
 ]
 
 const isCurrent = (tab: typeof tabs[number]) => tab.paths.includes(route.path.replace(/\/$/, ''))
