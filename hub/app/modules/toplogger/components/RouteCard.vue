@@ -34,7 +34,7 @@
         class="shrink-0 text-xs tabular-nums text-muted"
       ><span aria-hidden="true">×{{ tops }}</span><span class="sr-only">{{ tops }} ascents</span></span>
       <span
-        class="flex min-h-12 w-20 shrink-0 flex-col items-center justify-center gap-1 rounded-lg px-2 py-2"
+        class="flex min-h-9 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 py-2"
         :class="done ? 'bg-emerald-700 text-white dark:bg-emerald-400 dark:text-emerald-950' : attempted ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400' : 'text-muted'"
         :title="done ? ascentLabel(tickType) : attempted ? 'Attempted' : 'To do'"
       >

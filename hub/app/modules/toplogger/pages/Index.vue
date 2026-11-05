@@ -68,11 +68,8 @@
     </p>
 
     <template v-if="!state.needsConnect">
-      <p class="mb-1.5 mt-4 text-xs font-medium text-muted">
-        All routes in this gym
-      </p>
       <div
-        class="flex gap-1 rounded-xl border border-outline/50 bg-surface p-1"
+        class="mt-4 flex gap-1 rounded-xl border border-outline/50 bg-surface p-1"
         role="group"
         aria-label="Route filters"
       >
