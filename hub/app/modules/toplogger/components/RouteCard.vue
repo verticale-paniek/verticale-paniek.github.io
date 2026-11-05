@@ -22,7 +22,7 @@
           {{ route.wall?.nameLoc || 'Wall unknown' }} · {{ route.holdColor?.nameLoc || 'Color unknown' }}
         </span>
         <span class="text-xs text-muted">
-          <span :class="{ 'text-emerald-700 dark:text-emerald-300': done }">{{ done ? ascentLabel(tickType) : attempted ? 'Attempted' : 'To do' }}</span><template v-if="route.climbUser?.totalTries"> · {{ route.climbUser.totalTries }} {{ route.climbUser.totalTries === 1 ? 'attempt' : 'attempts' }}</template>
+          {{ route.climbUser?.totalTries || 0 }} {{ route.climbUser?.totalTries === 1 ? 'attempt' : 'attempts' }}
         </span>
         <span
           v-if="ranked"
@@ -34,21 +34,19 @@
         class="shrink-0 text-xs tabular-nums text-muted"
       ><span aria-hidden="true">×{{ tops }}</span><span class="sr-only">{{ tops }} ascents</span></span>
       <span
-        class="flex min-h-9 shrink-0 flex-col items-center justify-center rounded-lg px-2 text-lg"
+        class="flex min-h-9 min-w-9 shrink-0 items-center justify-center rounded-lg px-2"
         :class="done ? 'bg-emerald-700 text-white dark:bg-emerald-400 dark:text-emerald-950' : attempted ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400' : 'text-muted'"
         :title="done ? ascentLabel(tickType) : attempted ? 'Attempted' : 'To do'"
+        role="img"
+        :aria-label="done ? ascentLabel(tickType) : attempted ? 'Attempted' : 'To do'"
       >
-        <Icon
-          v-if="done"
-          :name="tickType === 3 ? 'lucide:check-check' : tickType === 2 ? 'lucide:zap' : 'lucide:check'"
-          aria-hidden="true"
-        />
+        <span v-if="done" class="text-xs font-bold" aria-hidden="true">{{ tickType === 3 ? 'ON' : tickType === 2 ? 'FL' : 'RP' }}</span>
         <Icon
           v-else
           name="lucide:circle"
+          class="text-lg"
           aria-hidden="true"
         />
-        <span v-if="done" class="text-[10px] font-bold leading-3">DONE</span>
       </span>
     </NuxtLink>
   </li>
