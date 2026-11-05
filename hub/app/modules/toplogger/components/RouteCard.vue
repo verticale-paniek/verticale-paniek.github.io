@@ -34,19 +34,16 @@
         class="shrink-0 text-xs tabular-nums text-muted"
       ><span aria-hidden="true">×{{ tops }}</span><span class="sr-only">{{ tops }} ascents</span></span>
       <span
-        class="flex min-h-9 min-w-9 shrink-0 items-center justify-center rounded-lg px-2"
+        class="flex min-h-12 w-20 shrink-0 flex-col items-center justify-center gap-1 rounded-lg px-2 py-2"
         :class="done ? 'bg-emerald-700 text-white dark:bg-emerald-400 dark:text-emerald-950' : attempted ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400' : 'text-muted'"
         :title="done ? ascentLabel(tickType) : attempted ? 'Attempted' : 'To do'"
-        role="img"
-        :aria-label="done ? ascentLabel(tickType) : attempted ? 'Attempted' : 'To do'"
       >
-        <span v-if="done" class="text-xs font-bold" aria-hidden="true">{{ tickType === 3 ? 'ON' : tickType === 2 ? 'FL' : 'RP' }}</span>
         <Icon
-          v-else
-          name="lucide:circle"
+          :name="done ? tickType === 3 ? 'lucide:check-check' : tickType === 2 ? 'lucide:zap' : 'lucide:check' : attempted ? 'lucide:rotate-cw' : 'lucide:circle'"
           class="text-lg"
           aria-hidden="true"
         />
+        <span class="text-xs font-semibold leading-none">{{ done ? ascentLabel(tickType) : attempted ? 'Attempted' : 'To do' }}</span>
       </span>
     </NuxtLink>
   </li>
