@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div :class="fullscreen ? 'flex min-h-0 flex-1 flex-col overflow-y-auto' : ''">
     <p v-if="!sourceUrl || error" class="my-3 text-sm text-muted" role="status">
       {{ error || (floorplanPath === undefined ? 'Map data has not loaded yet. Refresh routes and try again.' : 'No floorplan is available for this gym. Routes are listed below.') }}
       <button v-if="error" class="min-h-11 px-2 text-accent underline" @click="loadDrawing">
@@ -12,8 +12,8 @@
     <template v-if="drawing">
       <div
         ref="viewport"
-        class="relative h-[calc(100dvh-28rem)] min-h-64 max-h-[600px] touch-none select-none overflow-hidden rounded-xl border border-outline bg-white focus-visible:outline-2 focus-visible:outline-accent"
-        :class="view.dragging ? 'cursor-grabbing' : 'cursor-grab'"
+        class="relative touch-none select-none overflow-hidden border-outline bg-white focus-visible:outline-2 focus-visible:outline-accent"
+        :class="[fullscreen ? 'min-h-0 flex-1' : 'h-[calc(100dvh-28rem)] min-h-64 max-h-[600px] rounded-xl border', view.dragging ? 'cursor-grabbing' : 'cursor-grab']"
         tabindex="0"
         role="region"
         aria-label="Gym map. Drag to pan, pinch or scroll to zoom. Arrow keys pan; plus and minus zoom; Home fits the map."
@@ -50,11 +50,18 @@
           </span>
         </NuxtLink>
       </div>
-      <p v-if="unplaced.length" class="mt-4 text-sm text-muted">
+      <button
+        v-if="fullscreen && unplaced.length"
+        class="min-h-11 shrink-0 border-t border-outline/50 bg-surface px-4 py-2 text-sm font-medium text-accent focus-visible:outline-2 focus-visible:outline-accent"
+        @click="$emit('show-list')"
+      >
+        {{ unplaced.length }} {{ unplaced.length === 1 ? 'route has' : 'routes have' }} no map position · View list
+      </button>
+      <p v-else-if="unplaced.length" class="mt-4 text-sm text-muted">
         {{ unplaced.length }} routes have no map position:
       </p>
     </template>
-    <ul class="m-0 list-none p-0">
+    <ul v-if="!fullscreen || !drawing" class="m-0 list-none p-0" :class="{ 'px-4 pb-4': fullscreen }">
       <RouteCard v-for="route in drawing ? unplaced : routes" :key="route.id" :route="route" />
     </ul>
   </div>
@@ -67,7 +74,8 @@ import { floorplanUrl, hasPosition, mapMarkers, markerTextColor, readDrawing } f
 import { toploggerCall } from '~/shell/toplogger/api'
 import type { mapNavigation } from '../utils/mapNavigation'
 
-const props = defineProps<{ floorplanPath?: string | null, routes: Route[], navigation: ReturnType<typeof mapNavigation> }>()
+const props = defineProps<{ floorplanPath?: string | null, routes: Route[], navigation: ReturnType<typeof mapNavigation>, fullscreen?: boolean }>()
+defineEmits<{ 'show-list': [] }>()
 const supabase = useSupabase()
 const sourceUrl = computed(() => floorplanUrl(props.floorplanPath))
 const drawing = shallowRef<ReturnType<typeof readDrawing> | null>(null)

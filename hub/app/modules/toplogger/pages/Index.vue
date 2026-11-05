@@ -94,6 +94,7 @@
           <span>{{ selectedWalls.length === 1 ? selectedWalls[0] : selectedWalls.length ? `${selectedWalls.length} walls selected` : 'All walls' }}<template v-if="grade"> · {{ frenchGrade(Number(grade)) }}</template><template v-if="color"> · {{ color }}</template><template v-if="status"> · {{ statusLabels[status] }}<template v-if="status === 'untried'"> (no attempts)</template></template></span>
         </p>
         <button
+          ref="viewButton"
           class="flex min-h-11 shrink-0 items-center gap-2 rounded-lg px-3 text-sm font-medium text-muted transition hover:bg-text/5 hover:text-text focus-visible:outline-2 focus-visible:outline-accent"
           :aria-label="state.view === 'list' ? 'Switch to map view' : 'Switch to list view'"
           @click="state.view = state.view === 'list' ? 'map' : 'list'"
@@ -203,14 +204,42 @@
         </button>
       </div>
 
-      <GymMap
-        v-if="state.view === 'map'"
-        :key="`${state.gymId}:${gyms.find(g => g.id === state.gymId)?.floorplanPath ?? ''}`"
-        :navigation="mapNavigation"
-        :floorplan-path="gyms.find(g => g.id === state.gymId)?.floorplanPath"
-        :routes="filtered"
-      />
-      <ul v-else class="m-0 list-none p-0">
+      <DialogRoot :open="state.view === 'map'" @update:open="state.view = $event ? 'map' : 'list'">
+        <DialogPortal>
+          <DialogOverlay class="fixed inset-0 z-40 bg-bg" />
+          <DialogContent
+            class="fixed inset-0 z-50 flex h-dvh flex-col bg-bg pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pt-[env(safe-area-inset-top)] focus:outline-none"
+            @close-auto-focus.prevent="viewButton?.focus()"
+          >
+            <header class="flex shrink-0 items-center gap-3 border-b border-outline/50 bg-surface px-3 py-2 sm:px-5">
+              <DialogClose class="flex min-h-11 shrink-0 items-center gap-2 rounded-xl px-3 text-sm font-semibold text-accent transition hover:bg-text/5 focus-visible:outline-2 focus-visible:outline-accent">
+                <Icon name="lucide:list" aria-hidden="true" />
+                Back to list
+              </DialogClose>
+              <div class="min-w-0 flex-1 text-right">
+                <DialogTitle class="truncate text-sm font-semibold">
+                  {{ gyms.find(g => g.id === state.gymId)?.name || 'Gym map' }}
+                </DialogTitle>
+                <p class="text-xs text-muted" role="status">
+                  {{ filtered.length }} {{ filtered.length === 1 ? 'route' : 'routes' }} shown
+                </p>
+              </div>
+            </header>
+            <DialogDescription class="sr-only">
+              Fullscreen gym map with your current route filters. Drag to pan, pinch or scroll to zoom. Use Back to list or Escape to return to the route list.
+            </DialogDescription>
+            <GymMap
+              :key="`${state.gymId}:${gyms.find(g => g.id === state.gymId)?.floorplanPath ?? ''}`"
+              :navigation="mapNavigation"
+              :floorplan-path="gyms.find(g => g.id === state.gymId)?.floorplanPath"
+              :routes="filtered"
+              fullscreen
+              @show-list="state.view = 'list'"
+            />
+          </DialogContent>
+        </DialogPortal>
+      </DialogRoot>
+      <ul v-if="state.view === 'list'" class="m-0 list-none p-0">
         <RouteCard
           v-for="route in filtered"
           :key="route.id"
@@ -256,6 +285,7 @@ const { state, filters, gyms, activeRoutes, load, refresh, selectGym, resetFilte
 
 const { showFilters, grade, color, status, walls: selectedWalls } = toRefs(filters)
 const filtersButton = useTemplateRef<HTMLButtonElement>('filtersButton')
+const viewButton = useTemplateRef<HTMLButtonElement>('viewButton')
 const statusLabels: Record<string, string> = { untried: 'To try', attempted: 'Attempted', todo: 'Not done', topped: 'Done', new: 'New (last 14 days)' }
 
 const sorted = computed(() => [...activeRoutes.value].sort((a, b) =>
