@@ -321,7 +321,6 @@ const topped = computed(() => activeRoutes.value.filter(r => (r.climbUser?.tickT
 const completion = computed(() => [
   { id: '', title: 'All', count: activeRoutes.value.length },
   { id: 'todo', title: 'To do', count: activeRoutes.value.length - topped.value },
-  { id: 'topped', title: 'Done', count: topped.value },
   { id: 'new', title: 'New', count: activeRoutes.value.filter(r => isNewRoute(r.inAt)).length },
 ])
 const synced = computed(() => state.syncedAt
