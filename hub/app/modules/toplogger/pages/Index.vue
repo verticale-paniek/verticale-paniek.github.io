@@ -96,7 +96,7 @@
       <div class="mb-3 mt-4 flex flex-wrap items-center justify-between gap-2">
         <p class="flex min-w-0 flex-1 flex-col gap-1 text-xs text-muted" role="status">
           <strong class="text-sm font-semibold text-text">{{ filtered.length }} {{ filtered.length === 1 ? 'route' : 'routes' }} shown</strong>
-          <span>{{ selectedWalls.length === 1 ? selectedWalls[0] : selectedWalls.length ? `${selectedWalls.length} walls selected` : 'All walls' }}<template v-if="grade"> · {{ frenchGrade(Number(grade)) }}</template><template v-if="color"> · {{ color }}</template><template v-if="status"> · {{ statusLabels[status] }}<template v-if="status === 'untried'"> (no attempts)</template></template></span>
+          <span>{{ selectedWalls.length === 1 ? selectedWalls[0] : selectedWalls.length ? `${selectedWalls.length} walls selected` : 'All walls' }}<template v-if="selectedGrades.length"> · {{ selectedGrades.map(value => value === '?' ? '?' : frenchGrade(Number(value))).join(', ') }}</template><template v-if="status"> · {{ statusLabels[status] }}</template></span>
         </p>
         <button
           ref="viewButton"
@@ -145,41 +145,24 @@
             Retry
           </button>
         </p>
-        <label class="grid gap-1.5 font-semibold">Grade
-          <select
-            v-model="grade"
-            class="min-h-11 rounded-lg border border-outline bg-bg px-2 font-normal"
+        <fieldset class="col-span-2 m-0 min-w-0 border-0 p-0">
+          <legend class="font-semibold">
+            Grades
+          </legend>
+          <button
+            class="min-h-11 text-accent"
+            :aria-pressed="!selectedGrades.length"
+            @click="selectedGrades = []"
           >
-            <option value="">All grades</option>
-            <option
-              v-for="value in grades"
-              :key="value"
-              :value="String(value)"
-            >{{ frenchGrade(value) }}</option>
-          </select>
-        </label>
-        <label class="grid gap-1.5 font-semibold">Hold color
-          <select
-            v-model="color"
-            class="min-h-11 rounded-lg border border-outline bg-bg px-2 font-normal"
-          >
-            <option value="">All colors</option>
-            <option
-              v-for="value in colors"
-              :key="value"
-              :value="value"
-            >{{ value }}</option>
-          </select>
-        </label>
-        <label class="col-span-2 grid gap-1.5 font-semibold">Route status
-          <select
-            v-model="status"
-            class="min-h-11 rounded-lg border border-outline bg-bg px-2 font-normal"
-          >
-            <option value="">Any status</option>
-            <option v-for="(label, value) in statusLabels" :key="value" :value="value">{{ label }}</option>
-          </select>
-        </label>
+            All grades
+          </button>
+          <div class="flex flex-wrap gap-x-4">
+            <label v-for="value in grades" :key="value" class="flex min-h-11 items-center gap-2">
+              <input v-model="selectedGrades" class="size-4.5 accent-accent" type="checkbox" :value="value">
+              {{ value === '?' ? '? (ungraded)' : frenchGrade(Number(value)) }}
+            </label>
+          </div>
+        </fieldset>
         <details class="col-span-2 min-w-0">
           <summary class="min-h-11 cursor-pointer content-center rounded-lg font-semibold focus-visible:outline-2 focus-visible:outline-accent">
             Walls · {{ selectedWalls.length ? `${selectedWalls.length} selected` : 'All walls' }}
@@ -309,6 +292,7 @@ import { toploggerCall } from '~/shell/toplogger/api'
 import RouteCard from '../components/RouteCard.vue'
 import GymMap from '../components/GymMap.vue'
 import TlTabs from '../components/TlTabs.vue'
+import { gradeFilterKey, matchesGrades } from '../utils/filters'
 import { useTopLogger } from '../useTopLogger'
 import { defaultWallSelection, frenchGrade, isNewRoute, isActive } from '~/shell/toplogger/domain'
 
@@ -326,10 +310,10 @@ watch([() => filters.showFilters, () => state.gymId, () => state.account], () =>
   }
 }, { immediate: true })
 
-const { showFilters, grade, color, status, walls: selectedWalls } = toRefs(filters)
+const { showFilters, grades: selectedGrades, status, walls: selectedWalls } = toRefs(filters)
 const filtersButton = useTemplateRef<HTMLButtonElement>('filtersButton')
 const viewButton = useTemplateRef<HTMLButtonElement>('viewButton')
-const statusLabels: Record<string, string> = { untried: 'To try', attempted: 'Attempted', todo: 'Not done', topped: 'Done', new: 'New (last 14 days)' }
+const statusLabels: Record<string, string> = { todo: 'To do', new: 'New (last 14 days)' }
 
 const sorted = computed(() => [...activeRoutes.value].sort((a, b) =>
   a.grade - b.grade
@@ -338,28 +322,17 @@ const sorted = computed(() => [...activeRoutes.value].sort((a, b) =>
 
 const filtered = computed(() => {
   return sorted.value.filter((route) => {
-    const cu = route.climbUser
     const matchesStatus = !status.value
-      || (status.value === 'new'
-        ? isNewRoute(route.inAt)
-        : status.value === 'topped'
-          ? (cu?.tickType || 0) > 0
-          : status.value === 'todo'
-            ? !cu?.tickType
-            : status.value === 'attempted'
-              ? (cu?.totalTries || 0) > 0 && !cu?.tickType
-              : !cu?.totalTries && !cu?.tickType)
-    return (!grade.value || String(route.grade) === grade.value)
+      || (status.value === 'new' ? isNewRoute(route.inAt) : !route.climbUser?.tickType)
+    return matchesGrades(route.grade, selectedGrades.value)
       && (!selectedWalls.value.length || selectedWalls.value.includes(route.wall?.nameLoc || ''))
-      && (!color.value || route.holdColor?.nameLoc === color.value)
       && matchesStatus
   })
 })
 
-const grades = computed(() => [...new Set(activeRoutes.value.map(r => r.grade))].sort((a, b) => a - b))
+const grades = computed(() => ['?', ...new Set(activeRoutes.value.map(r => r.grade).sort((a, b) => a - b).map(gradeFilterKey).filter(value => value !== '?'))])
 const walls = computed(() => [...new Set(activeRoutes.value.flatMap(r => r.wall?.nameLoc ? [r.wall.nameLoc] : []))].sort((a, b) => a.localeCompare(b, undefined, { numeric: true })))
-const colors = computed(() => [...new Set(activeRoutes.value.map(r => r.holdColor?.nameLoc).filter((c): c is string => !!c))].sort())
-const filterCount = computed(() => [grade.value, selectedWalls.value.length, color.value, status.value, viewer.selected.value].filter(Boolean).length)
+const filterCount = computed(() => [selectedGrades.value.length, selectedWalls.value.length, status.value, viewer.selected.value].filter(Boolean).length)
 const topped = computed(() => activeRoutes.value.filter(r => (r.climbUser?.tickType || 0) > 0).length)
 const completion = computed(() => [
   { id: '', title: 'All', count: activeRoutes.value.length },
