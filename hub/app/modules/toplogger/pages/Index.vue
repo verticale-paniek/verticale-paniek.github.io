@@ -24,12 +24,12 @@
       <button
         class="grid size-11 shrink-0 place-items-center rounded-xl text-muted transition hover:bg-text/5 hover:text-text focus-visible:outline-2 focus-visible:outline-accent disabled:opacity-50"
         aria-label="Refresh routes"
-        :disabled="state.busy || state.needsConnect"
-        @click="refresh"
+        :disabled="state.busy || viewer.busy.value || state.needsConnect"
+        @click="refreshView"
       >
         <Icon
           name="lucide:refresh-cw"
-          :class="{ 'animate-spin': state.busy }"
+          :class="{ 'animate-spin': state.busy || viewer.busy.value }"
           aria-hidden="true"
         />
       </button>
@@ -68,6 +68,14 @@
     </p>
 
     <template v-if="!state.needsConnect">
+      <OverrideBanner
+        v-if="viewer.selected.value"
+        :name="viewer.name.value"
+        :busy="viewer.busy.value"
+        :error="viewer.error.value"
+        @exit="viewer.exit"
+        @retry="viewer.refresh"
+      />
       <div
         class="mt-4 flex gap-1 rounded-xl border border-outline/50 bg-surface p-1"
         role="group"
@@ -125,6 +133,18 @@
         >
           Show {{ filtered.length }} {{ filtered.length === 1 ? 'route' : 'routes' }}
         </button>
+        <label class="col-span-2 grid gap-1.5 font-semibold">View progress for
+          <select :value="viewer.selected.value?.id || ''" class="min-h-11 w-full min-w-0 rounded-lg border border-outline bg-bg px-2 font-normal" @change="viewer.select(($event.target as HTMLSelectElement).value)">
+            <option value="">Me (my progress)</option>
+            <option v-for="climber in viewer.climbers.value.filter(c => c.id !== state.profile?.id)" :key="climber.id" :value="climber.id">{{ climber.fullName || 'Unnamed climber' }}</option>
+          </select>
+          <span v-if="viewer.loadingClimbers.value" class="text-xs font-normal text-muted" role="status">Loading climbers…</span>
+        </label>
+        <p v-if="viewer.climbersError.value" class="col-span-2 text-error" role="alert">
+          {{ viewer.climbersError.value }} <button class="min-h-11 underline" @click="viewer.loadClimbers">
+            Retry
+          </button>
+        </p>
         <label class="grid gap-1.5 font-semibold">Grade
           <select
             v-model="grade"
@@ -225,11 +245,20 @@
             <DialogDescription class="sr-only">
               Fullscreen gym map with your current route filters. Drag to pan, pinch or scroll to zoom. Use Back to list or Escape to return to the route list.
             </DialogDescription>
+            <OverrideBanner
+              v-if="viewer.selected.value"
+              :name="viewer.name.value"
+              :busy="viewer.busy.value"
+              :error="viewer.error.value"
+              @exit="viewer.exit"
+              @retry="viewer.refresh"
+            />
             <GymMap
               :key="`${state.gymId}:${gyms.find(g => g.id === state.gymId)?.floorplanPath ?? ''}`"
               :navigation="mapNavigation"
               :floorplan-path="gyms.find(g => g.id === state.gymId)?.floorplanPath"
               :routes="filtered"
+              :read-only="!!viewer.selected.value"
               fullscreen
               @show-list="state.view = 'list'"
             />
@@ -241,6 +270,7 @@
           v-for="route in filtered"
           :key="route.id"
           :route="route"
+          :read-only="!!viewer.selected.value"
         />
       </ul>
       <div
@@ -248,7 +278,7 @@
         class="py-8 text-center text-muted"
       >
         <p role="status">
-          {{ state.busy ? 'Fetching the latest from TopLogger…' : filterCount ? 'No matching routes. Try clearing your filters.' : 'No routes to show.' }}
+          {{ (state.busy || viewer.busy.value) ? 'Fetching the latest from TopLogger…' : filterCount ? 'No matching routes. Try clearing your filters.' : 'No routes to show.' }}
         </p>
         <div v-if="!state.busy" class="mt-3 flex flex-wrap justify-center gap-2">
           <button
@@ -262,6 +292,7 @@
       </div>
 
       <p
+        v-if="!viewer.selected.value"
         class="mt-6 text-xs text-muted"
         role="status"
       >
@@ -272,13 +303,28 @@
 </template>
 
 <script setup lang="ts">
+import OverrideBanner from '../components/OverrideBanner.vue'
+import { useRouteViewer } from '../useRouteViewer'
+import { toploggerCall } from '~/shell/toplogger/api'
 import RouteCard from '../components/RouteCard.vue'
 import GymMap from '../components/GymMap.vue'
 import TlTabs from '../components/TlTabs.vue'
 import { useTopLogger } from '../useTopLogger'
-import { defaultWallSelection, frenchGrade, isNewRoute } from '~/shell/toplogger/domain'
+import { defaultWallSelection, frenchGrade, isNewRoute, isActive } from '~/shell/toplogger/domain'
 
-const { state, filters, gyms, activeRoutes, load, refresh, selectGym, resetFilters, mapNavigation } = useTopLogger()
+const { state, filters, gyms, activeRoutes: ownRoutes, load, refresh, selectGym, resetFilters, mapNavigation } = useTopLogger()
+
+const supabase = useSupabase()
+const viewer = useRouteViewer(computed(() => `${state.account}:${state.gymId}`), toRef(state, 'gymId'), body => toploggerCall(supabase, body))
+const activeRoutes = computed(() => viewer.selected.value ? viewer.routes.value.filter(r => isActive(r)) : ownRoutes.value)
+function refreshView() {
+  return viewer.selected.value ? viewer.refresh() : refresh()
+}
+watch([() => filters.showFilters, () => state.gymId, () => state.account], () => {
+  if (filters.showFilters) {
+    void viewer.loadClimbers()
+  }
+}, { immediate: true })
 
 const { showFilters, grade, color, status, walls: selectedWalls } = toRefs(filters)
 const filtersButton = useTemplateRef<HTMLButtonElement>('filtersButton')
@@ -313,7 +359,7 @@ const filtered = computed(() => {
 const grades = computed(() => [...new Set(activeRoutes.value.map(r => r.grade))].sort((a, b) => a - b))
 const walls = computed(() => [...new Set(activeRoutes.value.flatMap(r => r.wall?.nameLoc ? [r.wall.nameLoc] : []))].sort((a, b) => a.localeCompare(b, undefined, { numeric: true })))
 const colors = computed(() => [...new Set(activeRoutes.value.map(r => r.holdColor?.nameLoc).filter((c): c is string => !!c))].sort())
-const filterCount = computed(() => [grade.value, selectedWalls.value.length, color.value, status.value].filter(Boolean).length)
+const filterCount = computed(() => [grade.value, selectedWalls.value.length, color.value, status.value, viewer.selected.value].filter(Boolean).length)
 const topped = computed(() => activeRoutes.value.filter(r => (r.climbUser?.tickType || 0) > 0).length)
 const completion = computed(() => [
   { id: '', title: 'All', count: activeRoutes.value.length },
@@ -332,6 +378,7 @@ watch([() => state.gymId, walls], () => {
 }, { immediate: true })
 
 function resetAll() {
+  viewer.exit()
   resetFilters()
   allWalls()
 }

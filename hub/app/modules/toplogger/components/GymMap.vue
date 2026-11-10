@@ -34,10 +34,11 @@
           draggable="false"
           :style="{ left: `${view.x + drawing.rect.x * view.scale}px`, top: `${view.y + drawing.rect.y * view.scale}px`, width: `${drawing.rect.width * view.scale}px`, height: `${drawing.rect.height * view.scale}px` }"
         >
-        <NuxtLink
+        <component
+          :is="readOnly ? 'div' : NuxtLink"
           v-for="marker in markers"
           :key="marker.route.id"
-          :to="{ path: '/toplogger/route', query: { id: marker.route.id } }"
+          :to="readOnly ? undefined : { path: '/toplogger/route', query: { id: marker.route.id } }"
           class="absolute flex size-9 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-lg border-2 border-white text-sm font-bold shadow-md hover:z-10 focus-visible:z-10 focus-visible:outline-4 focus-visible:outline-blue-600"
           :style="{ left: `${view.x + marker.x * view.scale}px`, top: `${view.y + marker.y * view.scale}px`, backgroundColor: colorValue(marker.route.holdColor?.color), color: markerTextColor(marker.route.holdColor?.color) }"
           :aria-label="`${marker.route.name || `Rope ${marker.route.label || '?'}`}, ${frenchGrade(marker.route.grade)}, ${marker.route.holdColor?.nameLoc || 'unknown color'}, ${ascentLabel(marker.route.climbUser?.tickType)}`"
@@ -48,7 +49,7 @@
           <span v-if="marker.route.climbUser?.tickType" class="absolute -right-1 -top-2 grid size-4 place-items-center rounded-full bg-emerald-700 text-white" aria-hidden="true">
             <Icon name="lucide:check" class="text-xs" />
           </span>
-        </NuxtLink>
+        </component>
       </div>
       <button
         v-if="fullscreen && unplaced.length"
@@ -62,19 +63,20 @@
       </p>
     </template>
     <ul v-if="!fullscreen || !drawing" class="m-0 list-none p-0" :class="{ 'px-4 pb-4': fullscreen }">
-      <RouteCard v-for="route in drawing ? unplaced : routes" :key="route.id" :route="route" />
+      <RouteCard v-for="route in drawing ? unplaced : routes" :key="route.id" :route="route" :read-only="readOnly" />
     </ul>
   </div>
 </template>
 
 <script setup lang="ts">
+import { NuxtLink } from '#components'
 import RouteCard from './RouteCard.vue'
 import { ascentLabel, colorValue, frenchGrade, type Route } from '~/shell/toplogger/domain'
 import { floorplanUrl, hasPosition, mapMarkers, markerTextColor, readDrawing } from '../utils/map'
 import { toploggerCall } from '~/shell/toplogger/api'
 import type { mapNavigation } from '../utils/mapNavigation'
 
-const props = defineProps<{ floorplanPath?: string | null, routes: Route[], navigation: ReturnType<typeof mapNavigation>, fullscreen?: boolean }>()
+const props = defineProps<{ readOnly?: boolean, floorplanPath?: string | null, routes: Route[], navigation: ReturnType<typeof mapNavigation>, fullscreen?: boolean }>()
 defineEmits<{ 'show-list': [] }>()
 const supabase = useSupabase()
 const sourceUrl = computed(() => floorplanUrl(props.floorplanPath))

@@ -1,7 +1,8 @@
 <template>
   <li class="mt-2">
-    <NuxtLink
-      :to="{ path: '/toplogger/route', query: { id: route.id } }"
+    <component
+      :is="readOnly ? 'div' : NuxtLink"
+      :to="readOnly ? undefined : { path: '/toplogger/route', query: { id: route.id } }"
       class="flex min-h-18 items-center gap-3 rounded-xl border border-l-4 p-3 text-text transition hover:border-accent/50 hover:bg-accent/5 focus-visible:outline-2 focus-visible:outline-accent"
       :class="done ? 'border-emerald-600/50 border-l-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 dark:border-l-emerald-400' : 'border-outline bg-surface'"
     >
@@ -45,15 +46,16 @@
         />
         <span class="text-xs font-semibold leading-none">{{ done ? ascentLabel(tickType) : attempted ? 'Attempted' : 'To do' }}</span>
       </span>
-    </NuxtLink>
+    </component>
   </li>
 </template>
 
 <script setup lang="ts">
+import { NuxtLink } from '#components'
 import { ascentLabel, colorValue, daysLeft, daysLeftLabel, frenchGrade, isNewRoute, topCount, type RankedRoute, type Route } from '~/shell/toplogger/domain'
 
 /** In the Top 10, `ranked` shows the ascent that earned the place instead of the route's current best. */
-const props = defineProps<{ route: Route, rank?: number, ranked?: RankedRoute, days?: number }>()
+const props = defineProps<{ readOnly?: boolean, route: Route, rank?: number, ranked?: RankedRoute, days?: number }>()
 const tickType = computed(() => props.ranked?.ascent.tickType ?? props.route.climbUser?.tickType ?? 0)
 const done = computed(() => tickType.value > 0)
 const attempted = computed(() => !done.value && !!props.route.climbUser?.totalTries)

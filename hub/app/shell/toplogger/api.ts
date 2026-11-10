@@ -59,6 +59,8 @@ export type TopLoggerRequest
     | { action: 'disconnect' }
     | { action: 'profile' }
     | { action: 'routes', gymId?: string }
+    | { action: 'climbers', gymId: string }
+    | { action: 'viewingRoutes', gymId: string, viewingUserId: string }
     | { action: 'floorplan', path: string }
     | { action: 'history', gymId: string }
     | { action: 'rankings', gymId: string, metric: 'grade' | 'tops', page: number }
