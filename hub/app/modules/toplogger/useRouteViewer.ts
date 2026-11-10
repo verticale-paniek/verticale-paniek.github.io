@@ -4,6 +4,13 @@ import type { TopLoggerRequest } from '~/shell/toplogger/api'
 
 type Climber = { id: string, fullName: string | null }
 
+const TEAM_NAMES = new Set(['cedric', 'jonathan', 'bjorn', 'jirka'])
+
+function isTeamMember(climber: Climber): boolean {
+  const firstName = (climber.fullName ?? '').trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().split(/\s+/)[0] ?? ''
+  return TEAM_NAMES.has(firstName)
+}
+
 /** Temporary, read-only perspective. Never writes to the signed-in user's shared state or cache. */
 export function useRouteViewer(
   scope: Ref<string>,
@@ -41,7 +48,7 @@ export function useRouteViewer(
       if (id !== listRequest) {
         return
       }
-      climbers.value = result.sort((a, b) => (a.fullName || '').localeCompare(b.fullName || ''))
+      climbers.value = result.filter(isTeamMember).sort((a, b) => (a.fullName || '').localeCompare(b.fullName || ''))
       loaded.value = true
     }
     catch {
