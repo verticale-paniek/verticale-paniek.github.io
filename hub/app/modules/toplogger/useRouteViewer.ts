@@ -4,11 +4,11 @@ import type { TopLoggerRequest } from '~/shell/toplogger/api'
 
 type Climber = { id: string, fullName: string | null }
 
-const TEAM_NAMES = new Set(['cedric', 'jonathan', 'bjorn', 'jirka'])
+const TEAM_NAMES = new Set(['cedric baetens', 'jirka moens', 'jonathan sansens', 'bjorn', '\'bjorn\''])
 
 function isTeamMember(climber: Climber): boolean {
-  const firstName = (climber.fullName ?? '').trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().split(/\s+/)[0] ?? ''
-  return TEAM_NAMES.has(firstName)
+  const fullName = (climber.fullName ?? '').trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ')
+  return TEAM_NAMES.has(fullName)
 }
 
 /** Temporary, read-only perspective. Never writes to the signed-in user's shared state or cache. */
