@@ -35,7 +35,7 @@
       ><span aria-hidden="true">×{{ tops }}</span><span class="sr-only">{{ tops }} ascents</span></span>
       <span
         class="flex min-h-9 w-28 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 py-2"
-        :class="done ? ascentClasses[tickType] : attempted ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400' : 'text-muted'"
+        :class="done ? 'bg-emerald-800 text-white dark:bg-emerald-300 dark:text-emerald-950' : attempted ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400' : 'text-muted'"
         :title="done ? ascentLabel(tickType) : attempted ? 'Attempted' : 'To do'"
       >
         <Icon
@@ -54,11 +54,6 @@ import { ascentLabel, colorValue, daysLeft, daysLeftLabel, frenchGrade, isNewRou
 
 /** In the Top 10, `ranked` shows the ascent that earned the place instead of the route's current best. */
 const props = defineProps<{ route: Route, rank?: number, ranked?: RankedRoute, days?: number }>()
-const ascentClasses: Record<number, string> = {
-  1: 'bg-emerald-100 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-200',
-  2: 'bg-emerald-500 text-emerald-950',
-  3: 'bg-emerald-800 text-white dark:bg-emerald-300 dark:text-emerald-950',
-}
 const tickType = computed(() => props.ranked?.ascent.tickType ?? props.route.climbUser?.tickType ?? 0)
 const done = computed(() => tickType.value > 0)
 const attempted = computed(() => !done.value && !!props.route.climbUser?.totalTries)
