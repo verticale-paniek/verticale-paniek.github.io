@@ -1,11 +1,12 @@
 // Module state shared by every TopLogger page: profile, selected gym, its routes, the route being viewed and the
 // list filters. Cached snapshots show immediately; the server (the `toplogger` Edge Function) is asked in the
 // background. Everything the phone sends is a coarse action; TopLogger rules are enforced server-side.
-import { computed, reactive } from 'vue'
+import { computed, reactive, watch } from 'vue'
 import {
   toploggerCall, TopLoggerApiError,
   type HistoryResult, type Home, type Profile, type RouteDetail, type VoteResult, type WriteResult,
 } from '~/shell/toplogger/api'
+import { routeFilters } from './utils/filters'
 import { cacheKey, clearCache, readCache, writeCache } from './utils/cache'
 import { mapNavigation as createMapNavigation } from './utils/mapNavigation'
 import { dayLabel, isActive, topTen, visibleLogs, type Ascent, type ClimbUser, type Community, type Route, type RouteLog } from '~/shell/toplogger/domain'
@@ -32,15 +33,19 @@ const state = reactive({
 })
 
 /** List filters live here (not in the page) so they survive opening a route and coming back. */
-const filters = reactive({
-  showFilters: false,
-  grade: '',
-  color: '',
-  status: '',
-  walls: [] as string[],
-  /** Once the climber picks walls (or "all walls") themselves, the gym's default selection stops applying. */
-  wallsChosen: false,
+const filters = reactive(routeFilters())
+
+// Keep the selected tab and filters across browser/PWA refreshes, scoped to this account and gym.
+watch(filters, () => {
+  if (state.account && state.gymId) {
+    writeCache(cacheKey(state.account, state.gymId, 'filters'), filters)
+  }
 })
+
+function restoreFilters(): void {
+  const saved = readCache<unknown>(cacheKey(state.account, state.gymId, 'filters'))
+  Object.assign(filters, routeFilters(saved?.data))
+}
 
 /** Top 10: the ascent history for the selected gym, plus routes that left the wall (needed to score old ascents). */
 const top = reactive({
@@ -96,6 +101,7 @@ function loadCached(account: string): void {
     state.profile = profile.data
     state.gymId = gym?.data ?? ''
   }
+  restoreFilters()
   const routes = readCache<RouteSnapshot>(cacheKey(account, state.gymId || '_', 'routes'))
   if (routes && routes.data.gymId === state.gymId) {
     state.routes = routes.data.routes
@@ -139,7 +145,10 @@ function resetFilters(): void {
 
 function apply(home: Home): void {
   state.profile = home.profile
-  state.gymId = home.gymId
+  if (state.gymId !== home.gymId) {
+    state.gymId = home.gymId
+    restoreFilters()
+  }
   state.routes = home.routes
   state.needsConnect = false
   state.syncedAt = save('routes', home.gymId, { gymId: home.gymId, routes: home.routes } satisfies RouteSnapshot)
@@ -245,6 +254,7 @@ export function useTopLogger() {
     if (!state.gymId) {
       // New device: take the saved gym before the first fetch so we do not load the wrong one first.
       state.gymId = (await prefs)?.gym_id ?? ''
+      restoreFilters()
     }
     if (!state.busy) {
       await refresh(supabase)
@@ -288,7 +298,7 @@ export function useTopLogger() {
     state.gymId = gymId
     state.routes = []
     state.syncedAt = ''
-    resetFilters()
+    restoreFilters()
     save('gym', '_', gymId)
     if (persist) {
       savePrefs({ gym_id: gymId })
