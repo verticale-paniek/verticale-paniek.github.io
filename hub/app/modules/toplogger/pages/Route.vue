@@ -411,15 +411,22 @@
               <li
                 v-for="topper in community.toppers"
                 :key="topper.id"
-                class="flex flex-wrap items-center gap-2 border-t border-outline/50 py-2 text-sm"
+                class="flex items-center gap-3 border-t border-outline/50 py-2 text-sm"
               >
                 <Icon
                   name="lucide:check"
                   class="text-accent"
                   aria-hidden="true"
                 />
-                <span>{{ topper.user?.fullName || 'Anonymous climber' }}</span>
-                <span class="ml-auto text-xs text-muted">{{ ascentLabel(topper.tickType) }}<template v-if="topper.grade"> · {{ frenchGrade(topper.grade) }}</template></span>
+                <span class="min-w-0 flex-1">
+                  <span class="block break-words">{{ topper.user?.fullName || 'Anonymous climber' }}</span>
+                  <span class="block text-xs text-muted">{{ ascentLabel(topper.tickType) }}</span>
+                </span>
+                <span v-if="topper.grade" class="shrink-0 text-right" :aria-label="`Grade vote: ${frenchGrade(topper.grade)}`">
+                  <span class="block text-xs text-muted">Grade vote</span>
+                  <strong class="text-base tabular-nums">{{ frenchGrade(topper.grade) }}</strong>
+                </span>
+                <span v-else class="shrink-0 text-xs text-muted">No grade vote</span>
               </li>
             </ul>
           </template>
