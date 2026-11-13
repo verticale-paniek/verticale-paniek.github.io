@@ -52,12 +52,25 @@ export interface RouteRecord {
 
 /** Every route at a gym with this user's progress on it. */
 export async function fetchRoutes(call: Call, gymId: unknown, userId: string): Promise<RouteRecord[]> {
-  const routes = await pages<RouteRecord>(call, ROUTES, 'climbs', { gymId: validId(gymId, 'gym'), userId })
+  // Match TopLogger's own app: omitting pagination returns up to 2000 routes in one snapshot.
+  // Explicit pages have unstable ordering: Klimax returned 249 rows but only 246 unique routes
+  // on 2026-11-13, skipping the yellow 6a at line 28. Deduplicating cannot recover those omissions.
+  const { climbs } = await call<{ climbs: Page<RouteRecord> | null }>(ROUTES, { gymId: validId(gymId, 'gym'), userId })
+  const p = climbs?.pagination
+  if (!climbs || !Array.isArray(climbs.data) || !p || p.page !== 1
+    || !Number.isSafeInteger(p.total) || p.total < 0
+    || !Number.isSafeInteger(p.perPage) || p.perPage <= 0
+    || p.total > p.perPage || climbs.data.length !== p.total) {
+    throw new TopLoggerError('api', 'TopLogger returned incomplete route data.')
+  }
+  const routes = climbs.data
   if (routes.some(r => !r || typeof r.id !== 'string' || !Number.isFinite(r.grade))) {
     throw new TopLoggerError('api', 'TopLogger returned incomplete route data.')
   }
-  // Pages have no stable sort order, so a route can appear on two pages: keep each id once.
-  return [...new Map(routes.map(r => [r.id, r])).values()]
+  if (new Set(routes.map(r => r.id)).size !== p.total) {
+    throw new TopLoggerError('api', 'TopLogger returned incomplete route data.')
+  }
+  return routes
 }
 
 export interface Gym {

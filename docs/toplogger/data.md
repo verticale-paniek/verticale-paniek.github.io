@@ -24,7 +24,7 @@ One Edge Function, one endpoint: `POST { action, ...params }` with the caller's 
 | Action | Does | Upstream |
 |---|---|---|
 | `status`, `connect`, `disconnect`, `profile` | Connection state and lifecycle (see `authentication.md`). | `userMe` |
-| `routes` | Home payload in one round trip: profile, the chosen gym (the requested one if you have it, else your home gym) and its routes with your progress. | `userMe` (cached), `climbs` (paged) |
+| `routes` | Home payload in one round trip: profile, the chosen gym (the requested one if you have it, else your home gym) and its routes with your progress. | `userMe` (cached), `climbs` (single complete snapshot) |
 | `floorplan` | Authenticated read of a public gym SVG; path restricted to TopLogger uploads, redirects rejected, 2 MB limit. | `uploads.toplogger.nu` |
 | `routeDetail` | One route plus your logs plus community data, fetched in parallel. Logs or community may come back `null` without failing the screen. | `climb`, `climbLogs`, `climb` stats, `climbUsers` (toppers) |
 | `history` | The Top 10 data in one call (below). | `climbDaysPaginated` |
@@ -82,7 +82,7 @@ Every call goes phone, Edge Function, TopLogger and back, so the function stays 
 
 - Credential rows have no client policy at all; only the function (service role) touches them. All TopLogger access goes through the function, which takes the user from the verified JWT.
 - Never log tokens or authorization headers; errors are sanitized (fixed messages, never upstream bodies). No TopLogger passwords are collected, and there is no general GraphQL proxy: only the documents in `queries.ts` can be sent, with validated variables.
-- Rate limits (per function instance, best effort): 60 requests a minute per user, 5 connect attempts a minute. Pagination is bounded (100 per page, at most 50 pages), responses are validated before they are used, and an incomplete answer fails the call instead of producing partial data.
+- Rate limits (per function instance, best effort): 60 requests a minute per user, 5 connect attempts a minute. Paginated operations are bounded (100 per page, at most 50 pages). Routes use a single request without explicit pagination, matching TopLogger’s own app (currently up to 2000 routes). Explicit route pages have unstable ordering and can skip routes while repeating others. Route row and unique-ID counts must both match the reported total; truncated or incomplete snapshots fail instead of replacing the cached list.
 - Module tables have RLS with an `auth.uid()` policy per operation (`toplogger_prefs`); `toplogger_credentials` has none for clients on purpose.
 
 ## Known limits

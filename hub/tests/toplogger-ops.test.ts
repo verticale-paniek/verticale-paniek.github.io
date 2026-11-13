@@ -56,12 +56,39 @@ describe('fetchRoutes', () => {
     expect(vars).toMatchObject({ gymId: '42', userId: 'tl-user' })
   })
 
-  it('keeps a route once when it appears on two pages', async () => {
-    const call = (async (_q: string, v: Record<string, unknown>) => {
-      const n = (v.pagination as { page: number }).page
-      return { climbs: page(n === 1 ? [route, { id: 'r2', grade: 610 }] : [{ id: 'r2', grade: 610 }, { id: 'r3', grade: 620 }], n, 4, 2) }
+  it('loads the entire gym in one request without unstable pagination', async () => {
+    const routes = Array.from({ length: 249 }, (_, i) => ({ id: `r${i}`, grade: 600 }))
+    routes[100] = { id: 'yellow-6a-line-28', grade: 600 }
+    let calls = 0
+    const call = (async (query: string, vars: Record<string, unknown>) => {
+      calls++
+      expect(query).not.toContain('$pagination')
+      expect(query).not.toContain('pagination:')
+      expect(vars).toEqual({ gymId: 'klimax', userId: 'u' })
+      return { climbs: page(routes, 1, 249, 2000) }
     }) as Call
-    expect((await fetchRoutes(call, '1', 'u')).map(r => r.id)).toEqual(['r1', 'r2', 'r3'])
+    expect(await fetchRoutes(call, 'klimax', 'u')).toEqual(routes)
+    expect(calls).toBe(1)
+  })
+
+  it.each([
+    null,
+    { data: [] },
+    page([route], 1, 2, 2000),
+    page([route, route], 1, 2, 2000),
+    page([route], 2, 1, 2000),
+    page([route], 1, 2001, 2000),
+    page([], 1, -1),
+    page([], 1, NaN),
+    page([], 1, 0, 0),
+  ])('rejects incomplete route snapshots: %j', async (climbs) => {
+    const call = (async () => ({ climbs })) as Call
+    expect(await failure(fetchRoutes(call, '1', 'u'))).toMatch(/incomplete route data/)
+  })
+
+  it('accepts a gym with no routes', async () => {
+    const call = (async () => ({ climbs: page([], 1, 0, 2000) })) as Call
+    expect(await fetchRoutes(call, '1', 'u')).toEqual([])
   })
 
   it('rejects malformed gym ids without calling TopLogger', async () => {
