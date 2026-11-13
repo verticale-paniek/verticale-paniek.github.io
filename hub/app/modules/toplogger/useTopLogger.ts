@@ -140,7 +140,7 @@ function staleHistory(): void {
 }
 
 function resetFilters(): void {
-  Object.assign(filters, { grades: [], status: '', walls: [], wallsChosen: false })
+  Object.assign(filters, { gradeMin: null, gradeMax: null, ungraded: 'include', status: '', walls: [], wallsChosen: false })
 }
 
 function apply(home: Home): void {

@@ -96,7 +96,7 @@
       <div class="mb-3 mt-4 flex flex-wrap items-center justify-between gap-2">
         <p class="flex min-w-0 flex-1 flex-col gap-1 text-xs text-muted" role="status">
           <strong class="text-sm font-semibold text-text">{{ filtered.length }} {{ filtered.length === 1 ? 'route' : 'routes' }} shown</strong>
-          <span>{{ selectedWalls.length === 1 ? selectedWalls[0] : selectedWalls.length ? `${selectedWalls.length} walls selected` : 'All walls' }}<template v-if="selectedGrades.length"> · {{ selectedGrades.map(value => value === '?' ? '?' : frenchGrade(Number(value))).join(', ') }}</template><template v-if="status"> · {{ statusLabels[status] }}</template></span>
+          <span>{{ selectedWalls.length === 1 ? selectedWalls[0] : selectedWalls.length ? `${selectedWalls.length} walls selected` : 'All walls' }}<template v-if="status"> · {{ statusLabels[status] }}</template></span>
         </p>
         <button
           ref="viewButton"
@@ -119,6 +119,13 @@
         >
           <Icon name="lucide:sliders-horizontal" aria-hidden="true" />
           <span v-if="filterCount" class="absolute right-1.5 top-1.5 size-1.5 rounded-full bg-accent" aria-hidden="true" />
+        </button>
+      </div>
+
+      <div v-if="gradeFiltered" class="mb-3 flex flex-wrap gap-2">
+        <button class="flex min-h-11 items-center gap-2 rounded-full bg-accent/10 px-3 text-sm font-medium text-accent focus-visible:outline-2 focus-visible:outline-accent" :aria-label="`Clear grade filter: ${gradeSummary}`" @click="resetGrades">
+          {{ gradeSummary }}
+          <Icon name="lucide:x" aria-hidden="true" />
         </button>
       </div>
 
@@ -145,23 +152,43 @@
             Retry
           </button>
         </p>
-        <fieldset class="col-span-2 m-0 min-w-0 border-0 p-0">
-          <legend class="font-semibold">
+        <fieldset class="col-span-2 m-0 min-w-0 rounded-xl border border-outline/50 p-4">
+          <legend class="px-1 font-semibold">
             Grades
           </legend>
-          <button
-            class="min-h-11 text-accent"
-            :aria-pressed="!selectedGrades.length"
-            @click="selectedGrades = []"
-          >
-            All grades
-          </button>
-          <div class="flex flex-wrap gap-x-4">
-            <label v-for="value in grades" :key="value" class="flex min-h-11 items-center gap-2">
-              <input v-model="selectedGrades" class="size-4.5 accent-accent" type="checkbox" :value="value">
-              {{ value === '?' ? '? (ungraded)' : frenchGrade(Number(value)) }}
-            </label>
+          <div class="flex items-center justify-between gap-3">
+            <span class="text-base font-semibold tabular-nums" aria-live="polite">{{ gradeSummary }}</span>
+            <button class="min-h-11 px-2 text-accent disabled:text-muted" :disabled="!gradeFiltered" @click="resetGrades">
+              Reset
+            </button>
           </div>
+          <div class="mt-1 flex justify-between text-xs text-muted">
+            <span>Min <strong class="ml-1 text-text">{{ frenchGrade(gradeScale[gradeRange[0]!]) }}</strong></span>
+            <span>Max <strong class="ml-1 text-text">{{ frenchGrade(gradeScale[gradeRange[1]!]) }}</strong></span>
+          </div>
+          <SliderRoot
+            v-model="gradeRange"
+            :min="0"
+            :max="gradeScale.length - 1"
+            :step="1"
+            :min-steps-between-thumbs="0"
+            :disabled="filters.ungraded === 'only'"
+            class="relative flex h-12 w-full touch-none select-none items-center data-[disabled]:opacity-35"
+          >
+            <SliderTrack class="relative h-1.5 grow rounded-full bg-outline/40">
+              <SliderRange class="absolute h-full rounded-full bg-accent" />
+            </SliderTrack>
+            <SliderThumb aria-label="Minimum grade" :aria-valuetext="frenchGrade(gradeScale[gradeRange[0]!])" class="relative block size-6 rounded-full border-2 border-accent bg-surface shadow-sm after:absolute after:-inset-2.5 after:rounded-full focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent" />
+            <SliderThumb aria-label="Maximum grade" :aria-valuetext="frenchGrade(gradeScale[gradeRange[1]!])" class="relative block size-6 rounded-full border-2 border-accent bg-surface shadow-sm after:absolute after:-inset-2.5 after:rounded-full focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent" />
+          </SliderRoot>
+          <label class="mt-2 flex min-h-11 items-center justify-between gap-3 border-t border-outline/50 pt-3">
+            <span class="text-muted">Ungraded <strong class="text-text">?</strong></span>
+            <select v-model="filters.ungraded" class="min-h-11 rounded-lg border border-outline bg-bg px-3 text-sm">
+              <option value="include">Include</option>
+              <option value="exclude">Hide</option>
+              <option value="only">Only ungraded</option>
+            </select>
+          </label>
         </fieldset>
         <details class="col-span-2 min-w-0">
           <summary class="min-h-11 cursor-pointer content-center rounded-lg font-semibold focus-visible:outline-2 focus-visible:outline-accent">
@@ -292,9 +319,9 @@ import { toploggerCall } from '~/shell/toplogger/api'
 import RouteCard from '../components/RouteCard.vue'
 import GymMap from '../components/GymMap.vue'
 import TlTabs from '../components/TlTabs.vue'
-import { gradeFilterKey, matchesGrades } from '../utils/filters'
+import { matchesGrades } from '../utils/filters'
 import { useTopLogger } from '../useTopLogger'
-import { defaultWallSelection, frenchGrade, isNewRoute, isActive } from '~/shell/toplogger/domain'
+import { FRENCH_GRADES, defaultWallSelection, frenchGrade, isNewRoute, isActive } from '~/shell/toplogger/domain'
 
 const { state, filters, gyms, activeRoutes: ownRoutes, load, refresh, selectGym, resetFilters, mapNavigation } = useTopLogger()
 
@@ -310,7 +337,7 @@ watch([() => filters.showFilters, () => state.gymId, () => state.account], () =>
   }
 }, { immediate: true })
 
-const { showFilters, grades: selectedGrades, status, walls: selectedWalls } = toRefs(filters)
+const { showFilters, status, walls: selectedWalls } = toRefs(filters)
 const filtersButton = useTemplateRef<HTMLButtonElement>('filtersButton')
 const viewButton = useTemplateRef<HTMLButtonElement>('viewButton')
 const statusLabels: Record<string, string> = { todo: 'To do', new: 'New (last 14 days)' }
@@ -324,15 +351,38 @@ const filtered = computed(() => {
   return sorted.value.filter((route) => {
     const matchesStatus = !status.value
       || (status.value === 'new' ? isNewRoute(route.inAt) : !route.climbUser?.tickType)
-    return matchesGrades(route.grade, selectedGrades.value)
+    return matchesGrades(route.grade, filters)
       && (!selectedWalls.value.length || selectedWalls.value.includes(route.wall?.nameLoc || ''))
       && matchesStatus
   })
 })
 
-const grades = computed(() => ['?', ...new Set(activeRoutes.value.map(r => r.grade).sort((a, b) => a - b).map(gradeFilterKey).filter(value => value !== '?'))])
+const gradeScale = FRENCH_GRADES
+const gradeRange = computed({
+  get: () => [filters.gradeMin === null ? 0 : gradeScale.indexOf(filters.gradeMin), filters.gradeMax === null ? gradeScale.length - 1 : gradeScale.indexOf(filters.gradeMax)],
+  set: (values: number[] | undefined) => {
+    if (!values || values.length !== 2) {
+      return
+    }
+    filters.gradeMin = values[0] === 0 ? null : gradeScale[values[0]!] ?? null
+    filters.gradeMax = values[1] === gradeScale.length - 1 ? null : gradeScale[values[1]!] ?? null
+  },
+})
+const gradeFiltered = computed(() => filters.gradeMin !== null || filters.gradeMax !== null || filters.ungraded !== 'include')
+const gradeSummary = computed(() => {
+  if (filters.ungraded === 'only') {
+    return 'Ungraded (?) only'
+  }
+  const min = frenchGrade(gradeScale[gradeRange.value[0]!])
+  const max = frenchGrade(gradeScale[gradeRange.value[1]!])
+  const range = filters.gradeMin === null && filters.gradeMax === null ? 'All grades' : min === max ? min : `${min}–${max}`
+  return `${range}${filters.ungraded === 'include' ? ' + ?' : ''}`
+})
+function resetGrades() {
+  Object.assign(filters, { gradeMin: null, gradeMax: null, ungraded: 'include' })
+}
 const walls = computed(() => [...new Set(activeRoutes.value.flatMap(r => r.wall?.nameLoc ? [r.wall.nameLoc] : []))].sort((a, b) => a.localeCompare(b, undefined, { numeric: true })))
-const filterCount = computed(() => [selectedGrades.value.length, selectedWalls.value.length, status.value, viewer.selected.value].filter(Boolean).length)
+const filterCount = computed(() => [gradeFiltered.value, selectedWalls.value.length, status.value, viewer.selected.value].filter(Boolean).length)
 const topped = computed(() => activeRoutes.value.filter(r => (r.climbUser?.tickType || 0) > 0).length)
 const completion = computed(() => [
   { id: '', title: 'All', count: activeRoutes.value.length },
